@@ -1,0 +1,3 @@
+[submodule "lib/minim"]
+	path = lib/minim
+	url = https://github.com/sjavis/minim
