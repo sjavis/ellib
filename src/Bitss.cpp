@@ -1,6 +1,8 @@
 #include "Bitss.h"
 
 #include <string>
+#include <math.h>
+#include <algorithm>
 
 #include "minim/State.h"
 #include "minim/Minimiser.h"
@@ -53,14 +55,28 @@ namespace ellib {
   }
 
 
-  void Bitss::recomputeKe() {
-  }
-
-
-  void Bitss::recomputeKd() {
+  void Bitss::recomputeCoefficients() {
+    // Estimate energy barrier
     int n_interp = 10;
-    for (int i=0; i<n_interp; i++) {
+    double emin = std::min(state1.energy(), state2.energy());
+    double emax = emin;
+    for (int i=1; i<n_interp; i++) {
+      double t = double(i) / n_interp;
+      Vector xtmp = state1.blockCoords() + state2.blockCoords();
+      emax = std::max(emax, state1.energy(xtmp));
     }
+    eb = emax - emin;
+
+    // Compute gradient magnitude in separation direction
+    Vector dg = _dist_grad();
+    double dgm = minim::vec::norm(dg);
+    double grad1 = minim::vec::dotProduct(dg, state1.gradient()) / dgm;
+    double grad2 = minim::vec::dotProduct(dg, state2.gradient()) / dgm;
+    double grad = std::max(sqrt(dgrad1+dgrad2), 2.828*eb/_di)
+
+    // Coefficients
+    _ke = _alpha / (2 * eb);
+    _kd = grad / (2.828 * _beta * _di);
   }
 
 

@@ -35,8 +35,8 @@ namespace ellib {
       Bitss& setMaxIter(int max_iter);
       Bitss& setDistStep(double dist_step);
       Bitss& setDistCutoff(double dist_cutoff);
-      Bitss& setDistError(double dist_error);
-      Bitss& setConstraintStr(double constraint_str);
+      Bitss& setAlpha(double alpha);
+      Bitss& setBeta(double beta);
       Bitss& setEScaleMax(double e_scale_max);
       Bitss& setDistFunc(DFunc dist, DGFunc dist_grad);
 
@@ -45,8 +45,8 @@ namespace ellib {
       int _max_iter = 10;
       double _dist_step = 0.5;
       double _dist_cutoff = 0.01;
-      double _dist_error = 0.1;
-      double _constraint_str = 0.1;
+      double _alpha = 10;
+      double _beta = 0.1;
       double _e_scale_max = 0;
 
       int _iter;
@@ -57,8 +57,7 @@ namespace ellib {
       DFunc _dist;
       DGFunc _dist_grad;
 
-      void recomputeKe();
-      void recomputeKd();
+      void recomputeCoefficients();
 
       class BitssPotential : public Potential {
         public:
