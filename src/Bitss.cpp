@@ -51,7 +51,12 @@ namespace ellib {
 
 
   void Bitss::run() {
-    state.minimise()
+    _d0 = _dist();
+    _di = _d0;
+    for (int iter=0, iter<_max_iter; iter++) {
+      _di = _di * (1 - _dist_step);
+      minimiser.minimise()
+    }
   }
 
 
@@ -84,6 +89,7 @@ namespace ellib {
   Bitss::BitssPotential::energy(const Vector &coords, const Args &args) {
     e1 = state1.energy() // Need to update the
     e2 = state2.energy() // individual coordinates
+    double e = e1 + e2;
   }
 
 

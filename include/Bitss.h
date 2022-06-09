@@ -43,6 +43,7 @@ namespace ellib {
 
     private:
       int _max_iter = 10;
+      int _coef_iter = 100;
       double _dist_step = 0.5;
       double _dist_cutoff = 0.01;
       double _alpha = 10;
