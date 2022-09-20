@@ -21,6 +21,7 @@ bin/%.o: %.cpp $(LIBPATHS)
 deps: $(LIBPATHS)
 
 bin/lib%.a:
+	git submodule update --init
 	$(MAKE) -C lib/$*
 	ln -sfn ../lib/$*/include include/$*
 	cp lib/$*/$@ $@
