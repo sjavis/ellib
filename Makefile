@@ -1,4 +1,5 @@
 SRC_DIR = src
+VPATH = $(SRC_DIR)
 SRC = $(foreach sdir, $(SRC_DIR), $(wildcard $(sdir)/*.cpp))
 OBJ = $(patsubst %.cpp,bin/%.o,$(notdir $(SRC)))
 INC = $(addprefix -I, $(SRC_DIR) include)
