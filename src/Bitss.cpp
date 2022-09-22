@@ -3,6 +3,7 @@
 #include <string>
 #include <math.h>
 #include <algorithm>
+#include <stdexcept>
 
 #include "minim/State.h"
 #include "minim/Minimiser.h"
@@ -12,84 +13,93 @@
 #include "minim/GradDescent.h"
 #include "minim/Anneal.h"
 
+#include "minim/utils/vec.h"
 #include "minim/utils/print.h"
 
 namespace ellib {
 
+  typedef std::vector<double> Vector;
 
-  Bitss::Bitss(State state1, State state2, std::string minimiser) {
-    Minimiser& min;
-    switch (minimiser) {
-      case "lbfgs":
-        min = minim::Lbfgs();
-        break;
-      case "fire":
-        min = minim::Fire();
-        break;
-      case "grad descent":
-        min = minim::GradDescent();
-        break;
-      case "anneal":
-        min = minim::Anneal();
-        break;
-      default:
-        minim::print("Error: Unknown minimiser chosen.");
-        stop;
+
+  Bitss::Bitss(State state1, State state2, Minimiser& minimiser)
+    : state(createState(state1, state2)), minimiser(minimiser)
+  {}
+
+
+  State Bitss::createState(const State& state1, const State& state2) {
+    BitssPotential pot;
+    Vector coords = state1.getCoords();
+    Vector coords2 = state2.getCoords();
+    coords.insert(coords.end(), coords2.begin(), coords2.end());
+    Args args(state1.ndof + state2.ndof);
+    return State(pot, coords, args);
+  }
+
+
+  State Bitss::run() {
+    BitssArgs &args = static_cast<BitssArgs&> (state.args);
+    args.d0 = args.dist(args.state1->getCoords(), args.state2->getCoords());
+    args.di = args.d0;
+    for (int iter=0; iter<_max_iter; iter++) {
+      args.di = args.di * (1 - _dist_step);
+      minimiser.minimise(state, &adjustState);
     }
-    Bitss(state1, state2, min);
+    return state;
   }
 
 
-  Bitss::Bitss(State state1, State state2, Minimiser minimiser)
-    : state1(state1), state2(state2), minimiser(minimiser)
-  {
-    Potential pot = BitssPotential();
-    Vector coords = ;
-    Args args();
-    state = State(pot, coords, args);
+  void Bitss::adjustState(int iter, State& state) {
+    BitssArgs &args = static_cast<BitssArgs&> (state.args);
+    // Update the coordinates for the individual states
+    Vector coords = state.getCoords();
+    auto coordsMid = coords.begin() + args.state1->ndof;
+    args.state1->setCoords(Vector(coords.begin(), coordsMid));
+    args.state2->setCoords(Vector(coordsMid, coords.end()));
+    // Recompute the BITSS coefficients
+    if (iter % args.coef_iter == 0) recomputeCoefficients(state);
   }
 
 
-  void Bitss::run() {
-    _d0 = _dist();
-    _di = _d0;
-    for (int iter=0, iter<_max_iter; iter++) {
-      _di = _di * (1 - _dist_step);
-      minimiser.minimise()
-    }
-  }
-
-
-  void Bitss::recomputeCoefficients() {
+  void Bitss::recomputeCoefficients(State& state) {
+    BitssArgs &args = static_cast<BitssArgs&> (state.args);
+    double e1 = args.state1->energy();
+    double e2 = args.state2->energy();
+    Vector g1 = args.state1->gradient();
+    Vector g2 = args.state2->gradient();
     // Estimate energy barrier
     int n_interp = 10;
-    double emin = std::min(state1.energy(), state2.energy());
+    double emin = std::min(e1, e2);
     double emax = emin;
+    Vector coords1 = args.state1->blockCoords();
+    Vector coords2 = args.state2->blockCoords();
     for (int i=1; i<n_interp; i++) {
       double t = double(i) / n_interp;
-      Vector xtmp = state1.blockCoords() + state2.blockCoords();
-      emax = std::max(emax, state1.energy(xtmp));
+      Vector xtmp = (1-t)*coords1 + t*coords2;
+      emax = std::max(emax, args.state1->energy(xtmp));
     }
-    eb = emax - emin;
+    double eb = emax - emin;
 
     // Compute gradient magnitude in separation direction
-    Vector dg = _dist_grad();
-    double dgm = minim::vec::norm(dg);
-    double grad1 = minim::vec::dotProduct(dg, state1.gradient()) / dgm;
-    double grad2 = minim::vec::dotProduct(dg, state2.gradient()) / dgm;
-    double grad = std::max(sqrt(dgrad1+dgrad2), 2.828*eb/_di)
+    Vector dg = args.dist_grad(args.state1->getCoords(), args.state2->getCoords());
+    double dgm = vec::norm(dg);
+    double grad1 = vec::dotProduct(dg, g1) / dgm;
+    double grad2 = vec::dotProduct(dg, g2) / dgm;
+    double grad = std::max(sqrt(grad1+grad2), 2.828*eb/args.di);
 
     // Coefficients
-    _ke = _alpha / (2 * eb);
-    _kd = grad / (2.828 * _beta * _di);
+    args.ke = args.alpha / (2 * eb);
+    args.kd = grad / (2.828 * args.beta * args.di);
   }
 
 
   // Potential
-  Bitss::BitssPotential::energy(const Vector &coords, const Args &args) {
-    e1 = state1.energy() // Need to update the
-    e2 = state2.energy() // individual coordinates
+  double Bitss::BitssPotential::energy(const Vector &coords, const Args &args_tmp) const {
+    const BitssArgs &args = static_cast<const BitssArgs&> (args_tmp);
+    // coords
+    double e1 = args.state1->energy();
+    double e2 = args.state2->energy();
     double e = e1 + e2;
+    return e;
   }
 
 

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 #include "minim/State.h"
 #include "minim/Potential.h"
 #include "minim/Minimiser.h"
@@ -15,22 +16,18 @@ namespace ellib {
   using minim::Minimiser;
 
   class Bitss {
-    private:
-      typedef std::vector<double> Vector;
-      typedef double (*DFunc)(const Vector&, const Vector&)
-      typedef Vector (*DGFunc)(const Vector&, const Vector&)
+    typedef std::vector<double> Vector;
+    typedef double (*DFunc)(const Vector&, const Vector&);
+    typedef Vector (*DGFunc)(const Vector&, const Vector&);
 
     public:
       State state;
-      State state1;
-      State state2;
-      Minimiser minimiser;
+      Minimiser &minimiser;
 
-      Bitss(State state1, State state2, std::string minimiser="lbfgs");
-      Bitss(State state1, State state2, Minimiser minimiser);
+      Bitss(State state1, State state2, Minimiser& minimiser);
       ~Bitss() {};
 
-      void run();
+      State run();
 
       Bitss& setMaxIter(int max_iter);
       Bitss& setDistStep(double dist_step);
@@ -43,28 +40,36 @@ namespace ellib {
 
     private:
       int _max_iter = 10;
-      int _coef_iter = 100;
       double _dist_step = 0.5;
       double _dist_cutoff = 0.01;
-      double _alpha = 10;
-      double _beta = 0.1;
       double _e_scale_max = 0;
-
       int _iter;
-      double _di;
-      double _d0;
-      double _ke;
-      double _kd;
-      DFunc _dist;
-      DGFunc _dist_grad;
 
-      void recomputeCoefficients();
+      static State createState(const State& state1, const State& state2);
+      static void adjustState(int iter, State& state);
+      static void recomputeCoefficients(State& state);
+
+      class BitssArgs : public Args {
+        public:
+          int coef_iter = 100;
+          double alpha = 10;
+          double beta = 0.1;
+          double di;
+          double d0;
+          double ke;
+          double kd;
+          DFunc dist;
+          DGFunc dist_grad;
+          std::shared_ptr<State> state1;
+          std::shared_ptr<State> state2;
+      };
 
       class BitssPotential : public Potential {
+        typedef std::vector<double> Vector;
         public:
-          double energy(const Vector &coords, const Args &args) override;
-          Vector gradient(const Vector &coords, const Args &args) override;
-      }
+          double energy(const Vector &coords, const Args &args) const override;
+          Vector gradient(const Vector &coords, const Args &args) const override;
+      };
   };
 
 }
