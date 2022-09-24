@@ -12,19 +12,24 @@ LDFLAGS = -Lbin
 CXX      = mpic++       # C++ compiler
 CXXFLAGS = $(INC) $(LDFLAGS) $(LDLIBS) -DPARALLEL # Flags for the C++ compiler
 
+.PHONY: all deps clean check
+
 all: $(OBJ)
 	ar -rcs bin/libellib.a $(OBJ)
 
-bin/%.o: %.cpp $(LIBPATHS)
-	$(CXX) $(CXXFLAGS) -c $^ -o $@
-
 deps: $(LIBPATHS)
 
-bin/lib%.a:
-	git submodule update --init
+clean:
+	rm bin/*.o bin/libellib.a $(LIBPATHS)
+
+$(OBJ): bin/%.o: %.cpp $(LIBPATHS)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(LIBPATHS): bin/lib%.a:
+	git submodule update --init lib/$*
 	$(MAKE) -C lib/$*
 	ln -sfn ../lib/$*/include include/$*
 	cp lib/$*/$@ $@
 
-clean:
-	rm bin/*.o bin/libellib.a $(LIBPATHS)
+check:
+	$(MAKE) -C test
