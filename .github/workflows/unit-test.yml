@@ -1,0 +1,10 @@
+name: unit-test
+on: [push]
+jobs:
+  unit-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: sudo apt install -y openmpi-bin
+      - run: make
+      - run: make check
