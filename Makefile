@@ -32,4 +32,5 @@ $(LIBPATHS): bin/lib%.a:
 	cp lib/$*/$@ $@
 
 check:
+	$(MAKE) -C test gtest
 	$(MAKE) -C test
