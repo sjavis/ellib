@@ -102,5 +102,15 @@ namespace ellib {
     return e;
   }
 
+  Vector Bitss::BitssPotential::gradient(const Vector &coords, const Args &args_tmp) const {
+    const BitssArgs &args = static_cast<const BitssArgs&> (args_tmp);
+    // coords
+    Vector g1 = args.state1->gradient();
+    Vector g2 = args.state2->gradient();
+    Vector g = g1;
+    g.insert(g.end(), g2.begin(), g2.end());
+    return g;
+  }
+
 
 }
