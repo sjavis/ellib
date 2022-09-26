@@ -1,35 +1,42 @@
+TARGET = libellib.a
 SRC_DIR = src
+INC_DIR = include
+BUILD_DIR = bin
+LIB_DIR = lib
+LIBS = minim
+
+CXX      = mpic++             # C++ compiler
+CXXFLAGS = -Wall -DPARALLEL   # Flags for the C++ compiler
+
+TARGET := $(BUILD_DIR)/$(TARGET)
 VPATH = $(SRC_DIR)
 SRC = $(foreach sdir, $(SRC_DIR), $(wildcard $(sdir)/*.cpp))
-OBJ = $(patsubst %.cpp,bin/%.o,$(notdir $(SRC)))
-INC = $(addprefix -I, $(SRC_DIR) include)
-
-LIBS = minim
+OBJ = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(notdir $(SRC)))
+INC = $(addprefix -I, $(INC_DIR))
+LIB = $(patsubst %,$(BUILD_DIR)/lib%.a, $(LIBS))
 LDLIBS = $(addprefix -l, $(LIBS))
-LIBPATHS = $(patsubst %,bin/lib%.a, $(LIBS))
-LDFLAGS = -Lbin
-
-CXX      = mpic++       # C++ compiler
-CXXFLAGS = $(INC) $(LDFLAGS) $(LDLIBS) -DPARALLEL # Flags for the C++ compiler
+LDFLAGS = $(addprefix -L, $(BUILD_DIR))
 
 .PHONY: all deps clean check
 
-all: $(OBJ)
-	ar -rcs bin/libellib.a $(OBJ)
+all: $(TARGET)
 
-deps: $(LIBPATHS)
+deps: $(LIB)
 
 clean:
-	rm bin/*.o bin/libellib.a $(LIBPATHS)
+	rm $(TARGET) $(OBJ) $(LIB)
 
-$(OBJ): bin/%.o: %.cpp $(LIBPATHS)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+$(TARGET): $(OBJ)
+	ar -rcs $(TARGET) $(OBJ)
 
-$(LIBPATHS): bin/lib%.a:
-	git submodule update --init lib/$*
-	$(MAKE) -C lib/$*
-	ln -sfn ../lib/$*/include include/$*
-	cp lib/$*/$@ $@
+$(OBJ): $(BUILD_DIR)/%.o: %.cpp $(LIB)
+	$(CXX) $(CXXFLAGS) $(INC) -c $< $(LDFLAGS) $(LDLIBS) -o $@
+
+$(LIB): $(BUILD_DIR)/lib%.a:
+	git submodule update --init $(LIB_DIR)/$*
+	$(MAKE) -C $(LIB_DIR)/$*
+	ln -sfn ../$(LIB_DIR)/$*/$(INC_DIR) $(INC_DIR)/$*
+	cp $(LIB_DIR)/$*/$@ $@
 
 check:
 	$(MAKE) -C test gtest

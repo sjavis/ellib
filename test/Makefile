@@ -1,13 +1,17 @@
-ROOT_DIR = ..
-INC = $(ROOT_DIR)/include
-BIN = $(ROOT_DIR)/bin
-LIBS = -lminim -lellib
-
-CXX = g++
-CXXFLAGS = -I$(INC) -L$(BIN) $(LIBS) -DPARALLEL
-
 TESTS = Bitss_test
 RUN_TESTS = $(addprefix run_, $(TESTS))
+
+ROOT_DIR = ..
+INC_DIR = $(ROOT_DIR)/include
+BUILD_DIR = $(ROOT_DIR)/bin
+LIBS = minim ellib
+
+CXX = mpic++
+CXXFLAGS = -Wall -DPARALLEL
+
+INC = $(addprefix -I, $(INC_DIR))
+LDLIBS = $(addprefix -l, $(LIBS))
+LDFLAGS = $(addprefix -L, $(BUILD_DIR))
 
 .PHONY: all clean $(RUN_TESTS) gtest
 
@@ -44,7 +48,7 @@ gtest_main.a: gtest-all.o gtest_main.o
 
 # Tests
 $(TESTS): %_test: %_test.o gtest_main.a
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ -lpthread -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ $(LDFLAGS) $(LDLIBS) -lpthread -o $@
 
 %_test.o: %_test.cpp $(GTEST_HEADERS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $<
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INC) -c $<
