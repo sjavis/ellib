@@ -17,7 +17,7 @@ LIB = $(patsubst %,$(BUILD_DIR)/lib%.a, $(LIBS))
 LDLIBS = $(addprefix -l, $(LIBS))
 LDFLAGS = $(addprefix -L, $(BUILD_DIR))
 
-.PHONY: all deps clean check
+.PHONY: all deps clean check $(LIB)
 
 all: $(TARGET)
 

@@ -21,6 +21,11 @@ namespace ellib {
   typedef std::vector<double> Vector;
 
 
+  Bitss::Bitss(State state1, State state2)
+    : state(createState(state1, state2)), minimiser(_default_minimiser)
+  {}
+
+
   Bitss::Bitss(State state1, State state2, Minimiser& minimiser)
     : state(createState(state1, state2)), minimiser(minimiser)
   {}

@@ -6,7 +6,7 @@
 #include <memory>
 #include "minim/State.h"
 #include "minim/Potential.h"
-#include "minim/Minimiser.h"
+#include "minim/Lbfgs.h"
 
 namespace ellib {
 
@@ -21,6 +21,7 @@ namespace ellib {
       State state;
       Minimiser &minimiser;
 
+      Bitss(State state1, State state2);
       Bitss(State state1, State state2, Minimiser& minimiser);
       ~Bitss() {};
 
@@ -40,6 +41,7 @@ namespace ellib {
       double _dist_step = 0.5;
       double _dist_cutoff = 0.01;
       double _e_scale_max = 0;
+      Lbfgs _default_minimiser;
       int _iter;
 
       static State createState(const State& state1, const State& state2);
