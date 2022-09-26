@@ -10,10 +10,7 @@
 
 namespace ellib {
 
-  using minim::State;
-  using minim::Args;
-  using minim::Potential;
-  using minim::Minimiser;
+  using namespace minim;
 
   class Bitss {
     typedef std::vector<double> Vector;

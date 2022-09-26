@@ -6,3 +6,8 @@
  */
 
 #include "Bitss.h"
+#include "minim/minim.h"
+
+namespace ellib {
+  using namespace minim;
+}
