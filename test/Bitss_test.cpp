@@ -2,14 +2,31 @@
 #include "minim/Lj3d.h"
 #include "minim/State.h"
 #include "minim/Lbfgs.h"
+#include "minim/utils/mpi.h"
 
 #include "gtest/gtest.h"
 
+
 TEST(BitssTest, Test1) {
-  minim::Lj3d pot;
-  minim::State s1 = pot.newState({0,0});
-  minim::State s2 = pot.newState({0,0});
-  minim::Lbfgs minimiser;
-  ellib::Bitss bitss(s1, s2, minimiser);
+  ellib::Lj3d pot;
+  ellib::State s1 = pot.newState({0,0});
+  ellib::State s2 = pot.newState({0,0});
+  ellib::Bitss bitss(s1, s2);
   EXPECT_EQ(1, 1);
+}
+
+
+int main(int argc, char** argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  ellib::mpiInit(&argc, &argv);
+
+  // Ensure only one processor prints
+  ::testing::TestEventListeners& listeners =
+      ::testing::UnitTest::GetInstance()->listeners();
+  if (ellib::mpi.rank != 0) {
+      delete listeners.Release(listeners.default_result_printer());
+  }
+  ellib::print(ellib::mpi.rank);
+
+  return RUN_ALL_TESTS();
 }

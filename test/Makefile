@@ -21,7 +21,7 @@ clean:
 	rm -f $(TESTS) gtest.a gtest_main.a *.o
 
 $(RUN_TESTS): run_%: %
-	./$<
+	mpirun -np 2 $<
 
 # Googletest rules and parameters, see:
 # https://github.com/google/googletest/blob/release-1.8.1/googletest/make/Makefile
@@ -47,7 +47,7 @@ gtest_main.a: gtest-all.o gtest_main.o
 	$(AR) $(ARFLAGS) $@ $^
 
 # Tests
-$(TESTS): %_test: %_test.o gtest_main.a
+$(TESTS): %_test: %_test.o gtest.a
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ $(LDFLAGS) $(LDLIBS) -lpthread -o $@
 
 %_test.o: %_test.cpp $(GTEST_HEADERS)

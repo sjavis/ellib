@@ -33,11 +33,12 @@ $(OBJ): $(BUILD_DIR)/%.o: %.cpp $(LIB)
 	$(CXX) $(CXXFLAGS) $(INC) -c $< $(LDFLAGS) $(LDLIBS) -o $@
 
 $(LIB): $(BUILD_DIR)/lib%.a:
-	git submodule update --init $(LIB_DIR)/$*
-	$(MAKE) -C $(LIB_DIR)/$*
-	ln -sfn ../$(LIB_DIR)/$*/$(INC_DIR) $(INC_DIR)/$*
-	cp $(LIB_DIR)/$*/$@ $@
+	@git submodule update --init $(LIB_DIR)/$*
+	$(MAKE) -sC $(LIB_DIR)/$*
+	@ln -sfn ../$(LIB_DIR)/$*/$(INC_DIR) $(INC_DIR)/$*
+	@cp $(LIB_DIR)/$*/$@ $@
 
 check:
-	$(MAKE) -C test gtest
-	$(MAKE) -C test
+	@echo Testing...
+	@$(MAKE) --no-print-directory -C test gtest
+	@$(MAKE) --no-print-directory -C test
