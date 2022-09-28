@@ -26,7 +26,6 @@ int main(int argc, char** argv) {
   if (ellib::mpi.rank != 0) {
       delete listeners.Release(listeners.default_result_printer());
   }
-  ellib::print(ellib::mpi.rank);
 
   return RUN_ALL_TESTS();
 }

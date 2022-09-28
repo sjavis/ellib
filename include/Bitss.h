@@ -48,7 +48,7 @@ namespace ellib {
       static void adjustState(int iter, State& state);
       static void recomputeCoefficients(State& state);
 
-      class BitssArgs : public Args {
+      class BitssArgs : public Potential::Args {
         public:
           int coef_iter = 100;
           double alpha = 10;

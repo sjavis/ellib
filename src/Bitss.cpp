@@ -36,7 +36,7 @@ namespace ellib {
     Vector coords = state1.getCoords();
     Vector coords2 = state2.getCoords();
     coords.insert(coords.end(), coords2.begin(), coords2.end());
-    Args args(state1.ndof + state2.ndof);
+    Potential::Args args(state1.ndof + state2.ndof);
     return State(pot, coords, args);
   }
 
