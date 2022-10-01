@@ -7,6 +7,7 @@
 #include "minim/State.h"
 #include "minim/Potential.h"
 #include "minim/Lbfgs.h"
+#include "minim/utils/vec.h"
 
 namespace ellib {
 
@@ -21,8 +22,8 @@ namespace ellib {
       State state;
       Minimiser &minimiser;
 
-      Bitss(State state1, State state2);
-      Bitss(State state1, State state2, Minimiser& minimiser);
+      Bitss(State& state1, State& state2);
+      Bitss(State& state1, State& state2, Minimiser& minimiser);
       ~Bitss() {};
 
       State run();
@@ -44,7 +45,7 @@ namespace ellib {
       Lbfgs _default_minimiser;
       int _iter;
 
-      static State createState(const State& state1, const State& state2);
+      static State createState(State& state1, State& state2);
       static void adjustState(int iter, State& state);
       static void recomputeCoefficients(State& state);
 
@@ -57,10 +58,12 @@ namespace ellib {
           double d0;
           double ke;
           double kd;
-          DFunc dist;
-          DGFunc dist_grad;
-          std::shared_ptr<State> state1;
-          std::shared_ptr<State> state2;
+          DFunc dist = [](const Vector &x1, const Vector &x2) -> double { return vec::norm(x1-x2); };
+          DGFunc dist_grad = [](const Vector &x1, const Vector &x2) -> Vector { return 1/vec::norm(x1-x2) * (x1-x2); };
+          State &state1;
+          State &state2;
+
+          BitssArgs(State& state1, State& state2, int ndof) : Args(ndof), state1(state1), state2(state2) {};
       };
 
       class BitssPotential : public Potential {
