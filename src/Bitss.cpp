@@ -20,18 +20,18 @@ namespace ellib {
   typedef std::vector<double> Vector;
 
 
-  Bitss::Bitss(State& state1, State& state2)
+  Bitss::Bitss(const State& state1, const State& state2)
     : state(createState(state1, state2)), minimiser(_default_minimiser)
   {}
 
 
-  Bitss::Bitss(State& state1, State& state2, Minimiser& minimiser)
+  Bitss::Bitss(const State& state1, const State& state2, Minimiser& minimiser)
     : state(createState(state1, state2)), minimiser(minimiser)
   {}
 
 
-  State Bitss::createState(State& state1, State& state2) {
-    BitssPotential pot;
+  State Bitss::createState(const State& state1, const State& state2) {
+    std::unique_ptr<Potential> pot(new BitssPotential);
     Vector coords = state1.getCoords();
     Vector coords2 = state2.getCoords();
     coords.insert(coords.end(), coords2.begin(), coords2.end());
@@ -49,7 +49,7 @@ namespace ellib {
       args.di = args.di * (1 - _dist_step);
       minimiser.minimise(state, &adjustState);
     }
-    // return state;
+    return state;
   }
 
 

@@ -22,8 +22,8 @@ namespace ellib {
       State state;
       Minimiser &minimiser;
 
-      Bitss(State& state1, State& state2);
-      Bitss(State& state1, State& state2, Minimiser& minimiser);
+      Bitss(const State& state1, const State& state2);
+      Bitss(const State& state1, const State& state2, Minimiser& minimiser);
       ~Bitss() {};
 
       State run();
@@ -45,7 +45,7 @@ namespace ellib {
       Lbfgs _default_minimiser;
       int _iter;
 
-      static State createState(State& state1, State& state2);
+      static State createState(const State& state1, const State& state2);
       static void adjustState(int iter, State& state);
       static void recomputeCoefficients(State& state);
 
@@ -60,13 +60,13 @@ namespace ellib {
           double kd;
           DFunc dist = [](const Vector &x1, const Vector &x2) -> double { return vec::norm(x1-x2); };
           DGFunc dist_grad = [](const Vector &x1, const Vector &x2) -> Vector { return 1/vec::norm(x1-x2) * (x1-x2); };
-          State &state1;
-          State &state2;
+          State state1;
+          State state2;
 
-          BitssArgs(State& state1, State& state2, int ndof) : Args(ndof), state1(state1), state2(state2) {};
+          BitssArgs(const State& state1, const State& state2, int ndof) : Args(ndof), state1(state1), state2(state2) {};
       };
 
-      class BitssPotential : public Potential {
+      class BitssPotential : public NewPotential<BitssPotential> {
         typedef std::vector<double> Vector;
         public:
           double energy(const Vector &coords, const Args &args) const override;
