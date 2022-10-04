@@ -87,8 +87,8 @@ namespace ellib {
     // Compute gradient magnitude in separation direction
     Vector dg = args.dist_grad(args.state1.getCoords(), args.state2.getCoords());
     double dgm = vec::norm(dg);
-    double grad1 = vec::dotProduct(dg, g1) / dgm;
-    double grad2 = vec::dotProduct(dg, g2) / dgm;
+    double grad1 = vec::dotProduct(dg, g1) / dgm; // TODO: make these positive
+    double grad2 = vec::dotProduct(dg, g2) / dgm; // vec::abs() needed
     double grad = std::max(sqrt(grad1+grad2), 2.828*eb/args.di);
 
     // Coefficients
@@ -98,21 +98,37 @@ namespace ellib {
 
 
   // Potential
+  // TODO: Combine energy and gradient
   double Bitss::BitssPotential::energy(const Vector &coords, const Args &args_tmp) const {
     const BitssArgs &args = static_cast<const BitssArgs&> (args_tmp);
-    // coords
+    // Single state energies
     double e1 = args.state1.energy();
     double e2 = args.state2.energy();
-    double e = e1 + e2;
-    return e;
+    double dist = args.dist(args.state1.getCoords(), args.state2.getCoords());
+    // Constraints
+    double ee = args.ke * pow(e1-e2, 2);
+    double ed = args.kd * pow(dist-args.di, 2);
+    // Total energy
+    return e1 + e2 + ee + ed;
   }
 
   Vector Bitss::BitssPotential::gradient(const Vector &coords, const Args &args_tmp) const {
     const BitssArgs &args = static_cast<const BitssArgs&> (args_tmp);
-    // coords
-    Vector g1 = args.state1.gradient();
-    Vector g2 = args.state2.gradient();
-    Vector g = g1;
+    double e1 = args.state1.energy();
+    double e2 = args.state2.energy();
+    double dist = args.dist(args.state1.getCoords(), args.state2.getCoords());
+    // Single state gradients
+    Vector gs1 = args.state1.gradient();
+    Vector gs2 = args.state2.gradient();
+    // Energy constraint
+    Vector ge1 = (1 + 2*args.ke*(e1-e2)) * gs1;
+    Vector ge2 = (1 + 2*args.ke*(e2-e1)) * gs2;
+    // Distance constraint
+    Vector distg = args.dist_grad(args.state1.getCoords(), args.state2.getCoords());
+    Vector gd = 2 * args.kd * (dist - args.di) * distg;
+    // Total gradient
+    Vector g = ge1 + gd;
+    Vector g2 = ge2 - gd;
     g.insert(g.end(), g2.begin(), g2.end());
     return g;
   }
