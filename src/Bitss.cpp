@@ -1,6 +1,5 @@
 #include "Bitss.h"
 
-#include <string>
 #include <math.h>
 #include <algorithm>
 #include <stdexcept>
@@ -17,10 +16,24 @@ namespace ellib {
   typedef std::vector<double> Vector;
 
 
-  Bitss::Bitss(const State& state1, const State& state2)
-    : Bitss(state1, state2, std::move(std::unique_ptr<Lbfgs>(new Lbfgs)))
-  {}
-
+  Bitss::Bitss(const State& state1, const State& state2, const std::string& minimiser)
+    : state(createState(state1, state2))
+  {
+    std::string string = minimiser;
+    std::transform(string.begin(), string.end(), string.begin(),
+                   [](unsigned char c){ return std::tolower(c); });
+    if (string == "lbfgs") {
+      this->minimiser = std::unique_ptr<Minimiser>(new Lbfgs);
+    } else if (string == "fire") {
+      this->minimiser = std::unique_ptr<Minimiser>(new Fire);
+    } else if (string == "graddescent") {
+      this->minimiser = std::unique_ptr<Minimiser>(new GradDescent);
+    } else if (string == "anneal") {
+      this->minimiser = std::unique_ptr<Minimiser>(new Anneal(1, 0.0001));
+    } else {
+      throw std::invalid_argument("Unknown minimiser chosen");
+    }
+  }
 
   Bitss::Bitss(const State& state1, const State& state2, std::unique_ptr<Minimiser> minimiser)
     : state(createState(state1, state2)), minimiser(std::move(minimiser))

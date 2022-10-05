@@ -3,6 +3,8 @@
 #include "minim/Lj3d.h"
 #include "minim/Lbfgs.h"
 #include "minim/Fire.h"
+#include "minim/GradDescent.h"
+#include "minim/Anneal.h"
 #include "minim/utils/mpi.h"
 
 #include "gtest/gtest.h"
@@ -36,16 +38,37 @@ TEST(BitssTest, DefaultInitialisation) {
 }
 
 
-TEST(BitssTest, MinimiserConstructor) {
+TEST(BitssTest, MinimiserConstructor1) {
   Lj3d pot;
   State s1 = pot.newState({0,0});
   State s2 = pot.newState({1,0});
-
   // Explicitly pass minimiser object
   auto min = std::unique_ptr<Fire>(new Fire);
   Bitss bitss(s1, s2, std::move(min));
   EXPECT_NO_THROW(dynamic_cast<Fire&>(*bitss.minimiser));
   EXPECT_THROW(dynamic_cast<Lbfgs&>(*bitss.minimiser), std::bad_cast);
+}
+
+
+TEST(BitssTest, MinimiserConstructor2) {
+  Lj3d pot;
+  State s1 = pot.newState({0,0});
+  State s2 = pot.newState({1,0});
+  // Lbfgs
+  Bitss bitss1(s1, s2, "Lbfgs");
+  EXPECT_NO_THROW(dynamic_cast<Lbfgs&>(*bitss1.minimiser));
+  EXPECT_THROW(dynamic_cast<Fire&>(*bitss1.minimiser), std::bad_cast);
+  // Fire
+  Bitss bitss2(s1, s2, "fire");
+  EXPECT_NO_THROW(dynamic_cast<Fire&>(*bitss2.minimiser));
+  // GradDescent
+  Bitss bitss3(s1, s2, "GRADDESCENT");
+  EXPECT_NO_THROW(dynamic_cast<GradDescent&>(*bitss3.minimiser));
+  // Anneal
+  Bitss bitss4(s1, s2, "Anneal");
+  EXPECT_NO_THROW(dynamic_cast<Anneal&>(*bitss4.minimiser));
+  // Undefined
+  EXPECT_THROW(Bitss(s1, s2, "FooBar"), std::invalid_argument);
 }
 
 

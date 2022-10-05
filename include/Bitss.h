@@ -26,7 +26,7 @@ namespace ellib {
       State state;
       std::unique_ptr<Minimiser> minimiser;
 
-      Bitss(const State& state1, const State& state2);
+      Bitss(const State& state1, const State& state2, const std::string& minimiser="Lbfgs");
       Bitss(const State& state1, const State& state2, std::unique_ptr<Minimiser> minimiser);
       ~Bitss() {};
 
