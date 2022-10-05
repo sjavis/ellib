@@ -40,5 +40,6 @@ $(LIB): $(BUILD_DIR)/lib%.a:
 
 check:
 	@echo Testing...
+	@$(MAKE) --no-print-directory -C test clean
 	@$(MAKE) --no-print-directory -C test gtest
 	@$(MAKE) --no-print-directory -C test

@@ -19,6 +19,10 @@ namespace ellib {
     typedef Vector (*DGFunc)(const Vector&, const Vector&);
 
     public:
+      int max_iter = 10;
+      double dist_step = 0.5;
+      double dist_cutoff = 0.01;
+      double e_scale_max = 0;
       State state;
       std::unique_ptr<Minimiser> minimiser;
 
@@ -38,10 +42,6 @@ namespace ellib {
 
 
     private:
-      int _max_iter = 10;
-      double _dist_step = 0.5;
-      double _dist_cutoff = 0.01;
-      double _e_scale_max = 0;
       int _iter;
 
       static State createState(const State& state1, const State& state2);

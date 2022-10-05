@@ -5,9 +5,6 @@
 #include <algorithm>
 #include <stdexcept>
 
-#include "minim/State.h"
-#include "minim/Minimiser.h"
-
 #include "minim/Lbfgs.h"
 #include "minim/Fire.h"
 #include "minim/GradDescent.h"
@@ -45,8 +42,8 @@ namespace ellib {
     BitssArgs &args = static_cast<BitssArgs&> (*state.args);
     args.d0 = args.dist(args.state1.getCoords(), args.state2.getCoords());
     args.di = args.d0;
-    for (int iter=0; iter<_max_iter; iter++) {
-      args.di = args.di * (1 - _dist_step);
+    for (int iter=0; iter<max_iter; iter++) {
+      args.di = args.di * (1 - dist_step);
       minimiser->minimise(state, &adjustState);
     }
     return state;
