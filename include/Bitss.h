@@ -5,8 +5,8 @@
 #include <string>
 #include <memory>
 #include "minim/State.h"
+#include "minim/Minimiser.h"
 #include "minim/Potential.h"
-#include "minim/Lbfgs.h"
 #include "minim/utils/vec.h"
 
 namespace ellib {
@@ -20,10 +20,10 @@ namespace ellib {
 
     public:
       State state;
-      Minimiser &minimiser;
+      std::unique_ptr<Minimiser> minimiser;
 
       Bitss(const State& state1, const State& state2);
-      Bitss(const State& state1, const State& state2, Minimiser& minimiser);
+      Bitss(const State& state1, const State& state2, std::unique_ptr<Minimiser> minimiser);
       ~Bitss() {};
 
       State run();
@@ -42,7 +42,6 @@ namespace ellib {
       double _dist_step = 0.5;
       double _dist_cutoff = 0.01;
       double _e_scale_max = 0;
-      Lbfgs _default_minimiser;
       int _iter;
 
       static State createState(const State& state1, const State& state2);

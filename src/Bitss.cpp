@@ -21,12 +21,12 @@ namespace ellib {
 
 
   Bitss::Bitss(const State& state1, const State& state2)
-    : state(createState(state1, state2)), minimiser(_default_minimiser)
+    : Bitss(state1, state2, std::move(std::unique_ptr<Lbfgs>(new Lbfgs)))
   {}
 
 
-  Bitss::Bitss(const State& state1, const State& state2, Minimiser& minimiser)
-    : state(createState(state1, state2)), minimiser(minimiser)
+  Bitss::Bitss(const State& state1, const State& state2, std::unique_ptr<Minimiser> minimiser)
+    : state(createState(state1, state2)), minimiser(std::move(minimiser))
   {}
 
 
@@ -47,7 +47,7 @@ namespace ellib {
     args.di = args.d0;
     for (int iter=0; iter<_max_iter; iter++) {
       args.di = args.di * (1 - _dist_step);
-      minimiser.minimise(state, &adjustState);
+      minimiser->minimise(state, &adjustState);
     }
     return state;
   }
