@@ -51,12 +51,58 @@ namespace ellib {
   }
 
 
+  Bitss& Bitss::setMaxIter(int maxIter) {
+    this->maxIter = maxIter;
+    return *this;
+  }
+
+  Bitss& Bitss::setDistStep(double distStep) {
+    this->distStep = distStep;
+    return *this;
+  }
+
+  Bitss& Bitss::setDistCutoff(double distCutoff) {
+    this->distCutoff = distCutoff;
+    return *this;
+  }
+ 
+  Bitss& Bitss::setCoefIter(int coefIter) {
+    auto args = static_cast<BitssArgs*>(state.args.get());
+    args->coefIter = coefIter;
+    return *this;
+  }
+ 
+  Bitss& Bitss::setAlpha(double alpha) {
+    auto args = static_cast<BitssArgs*>(state.args.get());
+    args->alpha = alpha;
+    return *this;
+  }
+ 
+  Bitss& Bitss::setBeta(double beta) {
+    auto args = static_cast<BitssArgs*>(state.args.get());
+    args->beta = beta;
+    return *this;
+  }
+ 
+  Bitss& Bitss::setEScaleMax(double eScaleMax) {
+    this->eScaleMax = eScaleMax;
+    return *this;
+  }
+ 
+  Bitss& Bitss::setDistFunc(DFunc dist, DGFunc distGrad) {
+    auto args = static_cast<BitssArgs*>(state.args.get());
+    args->dist = dist;
+    args->distGrad = distGrad;
+    return *this;
+  }
+
+
   State Bitss::run() {
     BitssArgs &args = static_cast<BitssArgs&> (*state.args);
     args.d0 = args.dist(args.state1.getCoords(), args.state2.getCoords());
     args.di = args.d0;
-    for (int iter=0; iter<max_iter; iter++) {
-      args.di = args.di * (1 - dist_step);
+    for (_iter=0; _iter<maxIter; _iter++) {
+      args.di = args.di * (1 - distStep);
       minimiser->minimise(state, &adjustState);
     }
     return state;
@@ -71,7 +117,7 @@ namespace ellib {
     args.state1.setCoords(Vector(coords.begin(), coordsMid));
     args.state2.setCoords(Vector(coordsMid, coords.end()));
     // Recompute the BITSS coefficients
-    if (iter % args.coef_iter == 0) recomputeCoefficients(state);
+    if (iter % args.coefIter == 0) recomputeCoefficients(state);
   }
 
 
@@ -82,20 +128,20 @@ namespace ellib {
     Vector g1 = args.state1.gradient();
     Vector g2 = args.state2.gradient();
     // Estimate energy barrier
-    int n_interp = 10;
+    int nInterp = 10;
     double emin = std::min(e1, e2);
     double emax = emin;
     Vector coords1 = args.state1.blockCoords();
     Vector coords2 = args.state2.blockCoords();
-    for (int i=1; i<n_interp; i++) {
-      double t = double(i) / n_interp;
+    for (int i=1; i<nInterp; i++) {
+      double t = double(i) / nInterp;
       Vector xtmp = (1-t)*coords1 + t*coords2;
       emax = std::max(emax, args.state1.energy(xtmp));
     }
     double eb = emax - emin;
 
     // Compute gradient magnitude in separation direction
-    Vector dg = args.dist_grad(args.state1.getCoords(), args.state2.getCoords());
+    Vector dg = args.distGrad(args.state1.getCoords(), args.state2.getCoords());
     double dgm = vec::norm(dg);
     double grad1 = vec::dotProduct(dg, g1) / dgm; // TODO: make these positive
     double grad2 = vec::dotProduct(dg, g2) / dgm; // vec::abs() needed
@@ -109,8 +155,8 @@ namespace ellib {
 
   // Potential
   // TODO: Combine energy and gradient
-  double Bitss::BitssPotential::energy(const Vector &coords, const Args &args_tmp) const {
-    const BitssArgs &args = static_cast<const BitssArgs&> (args_tmp);
+  double Bitss::BitssPotential::energy(const Vector &coords, const Args &argsTmp) const {
+    const BitssArgs &args = static_cast<const BitssArgs&> (argsTmp);
     // Single state energies
     double e1 = args.state1.energy();
     double e2 = args.state2.energy();
@@ -122,8 +168,8 @@ namespace ellib {
     return e1 + e2 + ee + ed;
   }
 
-  Vector Bitss::BitssPotential::gradient(const Vector &coords, const Args &args_tmp) const {
-    const BitssArgs &args = static_cast<const BitssArgs&> (args_tmp);
+  Vector Bitss::BitssPotential::gradient(const Vector &coords, const Args &argsTmp) const {
+    const BitssArgs &args = static_cast<const BitssArgs&> (argsTmp);
     double e1 = args.state1.energy();
     double e2 = args.state2.energy();
     double dist = args.dist(args.state1.getCoords(), args.state2.getCoords());
@@ -134,7 +180,7 @@ namespace ellib {
     Vector ge1 = (1 + 2*args.ke*(e1-e2)) * gs1;
     Vector ge2 = (1 + 2*args.ke*(e2-e1)) * gs2;
     // Distance constraint
-    Vector distg = args.dist_grad(args.state1.getCoords(), args.state2.getCoords());
+    Vector distg = args.distGrad(args.state1.getCoords(), args.state2.getCoords());
     Vector gd = 2 * args.kd * (dist - args.di) * distg;
     // Total gradient
     Vector g = ge1 + gd;
