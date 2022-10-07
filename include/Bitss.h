@@ -25,6 +25,7 @@ namespace ellib {
       double eScaleMax = 0;
       State state;
       std::unique_ptr<Minimiser> minimiser;
+      class BitssPotential;
 
       Bitss(const State& state1, const State& state2, const std::string& minimiser="Lbfgs");
       Bitss(const State& state1, const State& state2, std::unique_ptr<Minimiser> minimiser);
@@ -45,20 +46,15 @@ namespace ellib {
 
     private:
       int _iter;
+      BitssPotential* _pot;
 
       static State createState(const State& state1, const State& state2);
       static void adjustState(int iter, State& state);
       static void recomputeCoefficients(State& state);
 
+    public:
       class BitssPotential : public NewPotential<BitssPotential> {
         typedef std::vector<double> Vector;
-        public:
-          double energy(const Vector &coords, const Args &args) const override;
-          Vector gradient(const Vector &coords, const Args &args) const override;
-      };
-
-    public:
-      class BitssArgs : public Potential::Args {
         public:
           int coefIter = 100;
           double alpha = 10;
@@ -67,13 +63,18 @@ namespace ellib {
           double d0;
           double ke;
           double kd;
-          DFunc dist = [](const Vector &x1, const Vector &x2) -> double { return vec::norm(x1-x2); };
-          DGFunc distGrad = [](const Vector &x1, const Vector &x2) -> Vector { return 1/vec::norm(x1-x2) * (x1-x2); };
           State state1;
           State state2;
+          DFunc dist = [](const Vector &x1, const Vector &x2) -> double { return vec::norm(x1-x2); };
+          DGFunc distGrad = [](const Vector &x1, const Vector &x2) -> Vector { return 1/vec::norm(x1-x2) * (x1-x2); };
 
-          BitssArgs(const State& state1, const State& state2, int ndof) : Args(ndof), state1(state1), state2(state2) {};
+          BitssPotential(const State& state1, const State& state2);
+          static State newState(const State& state1, const State& state2);
+
+          double energy(const Vector &coords) const override;
+          Vector gradient(const Vector &coords) const override;
       };
+
   };
 
 }

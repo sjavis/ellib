@@ -15,8 +15,8 @@ using namespace ellib;
 
 TEST(BitssTest, DefaultInitialisation) {
   Lj3d pot;
-  State s1 = pot.newState({0,0});
-  State s2 = pot.newState({1,0});
+  State s1 = pot.newState({0,0,0});
+  State s2 = pot.newState({1,0,0});
   Bitss bitss(s1, s2);
 
   // Check minimiser is Lbfgs
@@ -31,18 +31,18 @@ TEST(BitssTest, DefaultInitialisation) {
   EXPECT_EQ(coords1, s1.getCoords());
   EXPECT_EQ(coords2, s2.getCoords());
 
-  // Check single state potentials are correct (will be possible if Args is removed and state.pot made public)
-  // ASSERT_NO_THROW(dynamic_cast<Bitss::BitssPotential&>(*bitss.state._pot));
-  // auto bitssPot = static_cast<Bitss::BitssPotential&>(*bitss.state._pot);
-  // EXPECT_NO_THROW(dynamic_cast<Lj3d&>(*bitssPot.state1._pot));
-  // EXPECT_NO_THROW(dynamic_cast<Lj3d&>(*bitssPot.state2._pot));
+  // Check single state potentials are correct
+  ASSERT_NO_THROW(dynamic_cast<Bitss::BitssPotential&>(*bitss.state.pot));
+  auto bitssPot = static_cast<Bitss::BitssPotential&>(*bitss.state.pot);
+  EXPECT_NO_THROW(dynamic_cast<Lj3d&>(*bitssPot.state1.pot));
+  EXPECT_NO_THROW(dynamic_cast<Lj3d&>(*bitssPot.state2.pot));
 }
 
 
 TEST(BitssTest, MinimiserConstructor1) {
   Lj3d pot;
-  State s1 = pot.newState({0,0});
-  State s2 = pot.newState({1,0});
+  State s1 = pot.newState({0,0,0});
+  State s2 = pot.newState({1,0,0});
   // Explicitly pass minimiser object
   auto min = std::unique_ptr<Fire>(new Fire);
   Bitss bitss(s1, s2, std::move(min));
@@ -53,8 +53,8 @@ TEST(BitssTest, MinimiserConstructor1) {
 
 TEST(BitssTest, MinimiserConstructor2) {
   Lj3d pot;
-  State s1 = pot.newState({0,0});
-  State s2 = pot.newState({1,0});
+  State s1 = pot.newState({0,0,0});
+  State s2 = pot.newState({1,0,0});
   // Lbfgs
   Bitss bitss1(s1, s2, "Lbfgs");
   EXPECT_NO_THROW(dynamic_cast<Lbfgs&>(*bitss1.minimiser));
@@ -75,23 +75,23 @@ TEST(BitssTest, MinimiserConstructor2) {
 
 TEST(BitssTest, MaxIter) {
   Lj3d pot;
-  State s1 = pot.newState({0,0});
-  State s2 = pot.newState({1,0});
+  State s1 = pot.newState({0,0,0});
+  State s2 = pot.newState({1,0,0});
   Bitss bitss(s1, s2);
   // Check default value and setter
   EXPECT_EQ(bitss.maxIter, 10);
   bitss.setMaxIter(5);
   EXPECT_EQ(bitss.maxIter, 5);
   // Check final iter
-  bitss.run();
+  // bitss.run();
   EXPECT_EQ(bitss.iter(), 5);
 }
 
 
 TEST(BitssTest, DistStep) {
   Lj3d pot;
-  State s1 = pot.newState({0,0});
-  State s2 = pot.newState({1,0});
+  State s1 = pot.newState({0,0,0});
+  State s2 = pot.newState({1,0,0});
   Bitss bitss(s1, s2);
   // Check default value and setter
   EXPECT_EQ(bitss.distStep, 0.5);
@@ -100,15 +100,15 @@ TEST(BitssTest, DistStep) {
   // Test one iteration
   bitss.setMaxIter(1);
   bitss.run();
-  auto args = static_cast<Bitss::BitssArgs&>(*bitss.state.args);
-  EXPECT_EQ(args.di, 0.9);
+  auto bitssPot = static_cast<Bitss::BitssPotential&>(*bitss.state.pot);
+  EXPECT_EQ(bitssPot.di, 0.9);
 }
 
 
 TEST(BitssTest, DistCutoff) {
   Lj3d pot;
-  State s1 = pot.newState({0,0});
-  State s2 = pot.newState({1,0});
+  State s1 = pot.newState({0,0,0});
+  State s2 = pot.newState({1,0,0});
   Bitss bitss(s1, s2);
   // Check default value and setter
   EXPECT_EQ(bitss.distCutoff, 0.01);
@@ -123,8 +123,8 @@ TEST(BitssTest, DistCutoff) {
 
 TEST(BitssTest, EScaleMax) {
   Lj3d pot;
-  State s1 = pot.newState({0,0});
-  State s2 = pot.newState({1,0});
+  State s1 = pot.newState({0,0,0});
+  State s2 = pot.newState({1,0,0});
   Bitss bitss(s1, s2);
   // Check default value and setter
   EXPECT_EQ(bitss.eScaleMax, 0);
@@ -135,59 +135,59 @@ TEST(BitssTest, EScaleMax) {
 
 TEST(BitssTest, CoefIter) {
   Lj3d pot;
-  State s1 = pot.newState({0,0});
-  State s2 = pot.newState({1,0});
+  State s1 = pot.newState({0,0,0});
+  State s2 = pot.newState({1,0,0});
   Bitss bitss(s1, s2);
   // Check default value and setter
-  auto args = static_cast<Bitss::BitssArgs*>(bitss.state.args.get());
-  EXPECT_EQ(args->coefIter, 100);
+  auto bitssPot = static_cast<Bitss::BitssPotential*>(bitss.state.pot.get());
+  EXPECT_EQ(bitssPot->coefIter, 100);
   bitss.setCoefIter(10);
-  EXPECT_EQ(args->coefIter, 10);
+  EXPECT_EQ(bitssPot->coefIter, 10);
 }
 
 
 TEST(BitssTest, Alpha) {
   Lj3d pot;
-  State s1 = pot.newState({0,0});
-  State s2 = pot.newState({1,0});
+  State s1 = pot.newState({0,0,0});
+  State s2 = pot.newState({1,0,0});
   Bitss bitss(s1, s2);
   // Check default value and setter
-  auto args = static_cast<Bitss::BitssArgs*>(bitss.state.args.get());
-  EXPECT_EQ(args->alpha, 10);
+  auto bitssPot = static_cast<Bitss::BitssPotential*>(bitss.state.pot.get());
+  EXPECT_EQ(bitssPot->alpha, 10);
   bitss.setAlpha(2);
-  EXPECT_EQ(args->alpha, 2);
+  EXPECT_EQ(bitssPot->alpha, 2);
 }
 
 
 TEST(BitssTest, Beta) {
   Lj3d pot;
-  State s1 = pot.newState({0,0});
-  State s2 = pot.newState({1,0});
+  State s1 = pot.newState({0,0,0});
+  State s2 = pot.newState({1,0,0});
   Bitss bitss(s1, s2);
   // Check default value and setter
-  auto args = static_cast<Bitss::BitssArgs*>(bitss.state.args.get());
-  EXPECT_EQ(args->beta, 0.1);
+  auto bitssPot = static_cast<Bitss::BitssPotential*>(bitss.state.pot.get());
+  EXPECT_EQ(bitssPot->beta, 0.1);
   bitss.setBeta(0.01);
-  EXPECT_EQ(args->beta, 0.01);
+  EXPECT_EQ(bitssPot->beta, 0.01);
 }
 
 
 TEST(BitssTest, DistFunc) {
   Lj3d pot;
-  State s1 = pot.newState({0,0});
-  State s2 = pot.newState({1,0});
+  State s1 = pot.newState({0,0,0});
+  State s2 = pot.newState({1,0,0});
   Bitss bitss(s1, s2);
   // Check default value
-  auto args = static_cast<Bitss::BitssArgs*>(bitss.state.args.get());
+  auto bitssPot = static_cast<Bitss::BitssPotential*>(bitss.state.pot.get());
   typedef std::vector<double> Vector;
-  EXPECT_EQ(args->dist({3,0}, {0,4}), 5);
-  EXPECT_TRUE(ArraysNear(args->distGrad({3,0}, {0,4}),  {0.6, -0.8}, 1e-6));
+  EXPECT_EQ(bitssPot->dist({3,0}, {0,4}), 5);
+  EXPECT_TRUE(ArraysNear(bitssPot->distGrad({3,0}, {0,4}),  {0.6, -0.8}, 1e-6));
   // Check setter
   auto newDist = [](const Vector& x1, const Vector& x2) -> double { return x1[0]-x2[0]; };
   auto newGrad = [](const Vector& x1, const Vector& x2) -> Vector { return {1, 0}; };
   bitss.setDistFunc(newDist, newGrad);
-  EXPECT_EQ(args->dist({3,0}, {0,4}), 3);
-  EXPECT_TRUE(ArraysNear(args->distGrad({3,0}, {0,4}), {1, 0}, 1e-6));
+  EXPECT_EQ(bitssPot->dist({3,0}, {0,4}), 3);
+  EXPECT_TRUE(ArraysNear(bitssPot->distGrad({3,0}, {0,4}), {1, 0}, 1e-6));
 }
 
 
