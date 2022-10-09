@@ -19,13 +19,14 @@ namespace ellib {
     typedef Vector (*DGFunc)(const Vector&, const Vector&);
 
     public:
+      class BitssPotential;
+
       int maxIter = 10;
       double distStep = 0.5;
       double distCutoff = 0.01;
       double eScaleMax = 0;
       State state;
       std::unique_ptr<Minimiser> minimiser;
-      class BitssPotential;
 
       Bitss(const State& state1, const State& state2, const std::string& minimiser="Lbfgs");
       Bitss(const State& state1, const State& state2, std::unique_ptr<Minimiser> minimiser);

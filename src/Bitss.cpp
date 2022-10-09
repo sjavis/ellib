@@ -19,6 +19,8 @@ namespace ellib {
   Bitss::Bitss(const State& state1, const State& state2, const std::string& minimiser)
     : state(BitssPotential::newState(state1, state2))
   {
+    _pot = static_cast<BitssPotential*>(state.pot.get());
+
     std::string string = minimiser;
     std::transform(string.begin(), string.end(), string.begin(),
                    [](unsigned char c){ return std::tolower(c); });
@@ -37,7 +39,9 @@ namespace ellib {
 
   Bitss::Bitss(const State& state1, const State& state2, std::unique_ptr<Minimiser> minimiser)
     : state(BitssPotential::newState(state1, state2)), minimiser(std::move(minimiser))
-  {}
+  {
+    _pot = static_cast<BitssPotential*>(state.pot.get());
+  }
 
 
   Bitss& Bitss::setMaxIter(int maxIter) {
@@ -83,13 +87,13 @@ namespace ellib {
 
 
   State Bitss::run() {
-    // _pot->d0 = _pot->dist(_pot->state1.getCoords(), _pot->state2.getCoords());
-    // _pot->di = _pot->d0;
-    // for (_iter=0; _iter<maxIter; _iter++) {
-    //   _pot->di = _pot->di * (1 - distStep);
-    //   minimiser->minimise(state, &adjustState);
-    // }
-    // return state;
+    _pot->d0 = _pot->dist(_pot->state1.getCoords(), _pot->state2.getCoords());
+    _pot->di = _pot->d0;
+    for (_iter=0; _iter<maxIter; _iter++) {
+      _pot->di = _pot->di * (1 - distStep);
+      minimiser->minimise(state, &adjustState);
+    }
+    return state;
   }
 
 
