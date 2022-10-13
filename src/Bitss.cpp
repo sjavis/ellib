@@ -33,7 +33,7 @@ namespace ellib {
     } else if (string == "anneal") {
       this->minimiser = std::unique_ptr<Minimiser>(new Anneal(1, 0.0001));
     } else {
-      throw std::invalid_argument("Unknown minimiser chosen");
+      throw std::invalid_argument("Invalid minimiser chosen");
     }
   }
 
@@ -54,8 +54,19 @@ namespace ellib {
     return *this;
   }
 
-  Bitss& Bitss::setDistCutoff(double distCutoff) {
-    this->distCutoff = distCutoff;
+  Bitss& Bitss::setConvergenceDist(double convergenceDist) {
+    this->convergenceDist = convergenceDist;
+    return *this;
+  }
+
+  Bitss& Bitss::setConvergenceMethod(std::string convergenceMethod) {
+    if (convergenceMethod != "distance" &&
+        convergenceMethod != "relative distance" &&
+        convergenceMethod != "midpoint change" &&
+        convergenceMethod != "midpoint gradient") {
+      throw std::invalid_argument("Invalid convergence method chosen");
+    }
+    this->convergenceMethod = convergenceMethod;
     return *this;
   }
  
@@ -120,14 +131,14 @@ namespace ellib {
     int nInterp = 10;
     double emin = std::min(e1, e2);
     double emax = emin;
-    Vector coords1 = pot->state1.blockCoords();
+    Vector coords1 = pot->state1.blockCoords(); // TODO: Check if this needs the halo
     Vector coords2 = pot->state2.blockCoords();
     for (int i=1; i<nInterp; i++) {
       double t = double(i) / nInterp;
-      Vector xtmp = (1-t)*coords1 + t*coords2;
+      Vector xtmp = interp(coords1, coords2, t);
       emax = std::max(emax, pot->state1.energy(xtmp));
     }
-    double eb = emax - emin;
+    double eb = emax - emin; // TODO: ensure eb is not zero
 
     // Compute gradient magnitude in separation direction
     Vector dg = pot->distGrad(pot->state1.getCoords(), pot->state2.getCoords());
@@ -143,7 +154,37 @@ namespace ellib {
   
 
   bool Bitss::checkConvergence() {
-    return false;
+    bool converged = false;
+    if (convergenceMethod == "distance") {
+      converged = (_pot->di < convergenceDist);
+    } else if (convergenceMethod == "relative distance") {
+      converged = (_pot->di/_pot->d0 < convergenceDist);
+    } else if (convergenceMethod == "midpoint gradient") {
+      Vector coords1 = _pot->state1.blockCoords();
+      Vector coords2 = _pot->state2.blockCoords();
+      Vector ts = interp(coords1, coords2, 0.5);
+      Vector g = _pot->state1.gradient(ts);
+      double grms = vec::norm(g*g) / sqrt(g.size());
+      converged = (grms < state.convergence);
+    } else if (convergenceMethod == "midpoint change") {
+      Vector coords1 = _pot->state1.blockCoords();
+      Vector coords2 = _pot->state2.blockCoords();
+      Vector ts = interp(coords1, coords2, 0.5);
+      if (_iter > 0) {
+        double diff = _pot->dist(ts, _tsOld);
+        converged = (diff < convergenceDist);
+      }
+      _tsOld = ts;
+    }
+    return converged;
+  }
+
+
+  Vector Bitss::interp(const Vector& coords1, const Vector& coords2, double t) {
+    // if (coords1.size() != coords2.size()) {
+    //   throw std::invalid_argument("Attempting linear interpolation with different sized vectors");
+    // }
+    return (1-t)*coords1 + t*coords2;
   }
 
 

@@ -23,8 +23,10 @@ namespace ellib {
 
       int maxIter = 10;
       double distStep = 0.5;
-      double distCutoff = 0.01;
       double eScaleMax = 0;
+      double convergenceDist = 0.01;
+      std::string convergenceMethod = "relative distance"; //!< Method to determine convergence. Possible values: distance, relative distance, midpoint gradient, midpoint change
+
       State state;
       std::unique_ptr<Minimiser> minimiser;
 
@@ -36,7 +38,9 @@ namespace ellib {
 
       Bitss& setMaxIter(int maxIter);
       Bitss& setDistStep(double distStep);
-      Bitss& setDistCutoff(double distCutoff);
+      Bitss& setConvergenceDist(double convergenceDist);
+      Bitss& setConvergenceGrad(double convergenceGrad);
+      Bitss& setConvergenceMethod(std::string convergenceMethod);
       Bitss& setCoefIter(int coefIter);
       Bitss& setAlpha(double alpha);
       Bitss& setBeta(double beta);
@@ -47,11 +51,13 @@ namespace ellib {
 
     private:
       int _iter;
+      Vector _tsOld;
       BitssPotential* _pot;
 
       static State createState(const State& state1, const State& state2);
       static void adjustState(int iter, State& state);
       static void recomputeCoefficients(State& state); // TODO: should this not be static
+      static Vector interp(const Vector& coords1, const Vector& coords2, double t);
       bool checkConvergence();
       
 

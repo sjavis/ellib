@@ -83,7 +83,7 @@ TEST(BitssTest, MaxIter) {
   bitss.setMaxIter(5);
   EXPECT_EQ(bitss.maxIter, 5);
   // Check final iter
-  // bitss.run();
+  bitss.run();
   EXPECT_EQ(bitss.iter(), 5);
 }
 
@@ -105,15 +105,15 @@ TEST(BitssTest, DistStep) {
 }
 
 
-TEST(BitssTest, DistCutoff) {
+TEST(BitssTest, ConvergenceDist) {
   Lj3d pot;
   State s1 = pot.newState({0,0,0});
   State s2 = pot.newState({1,0,0});
   Bitss bitss(s1, s2);
   // Check default value and setter
-  EXPECT_EQ(bitss.distCutoff, 0.01);
-  bitss.setDistCutoff(0.5);
-  EXPECT_EQ(bitss.distCutoff, 0.5);
+  EXPECT_EQ(bitss.convergenceDist, 0.01);
+  bitss.setConvergenceDist(0.5);
+  EXPECT_EQ(bitss.convergenceDist, 0.5);
   // Check convergence
   bitss.setDistStep(0.5);
   bitss.run();
