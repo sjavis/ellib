@@ -51,7 +51,9 @@ namespace ellib {
 
       static State createState(const State& state1, const State& state2);
       static void adjustState(int iter, State& state);
-      static void recomputeCoefficients(State& state);
+      static void recomputeCoefficients(State& state); // TODO: should this not be static
+      bool checkConvergence();
+      
 
     public:
       class BitssPotential : public NewPotential<BitssPotential> {

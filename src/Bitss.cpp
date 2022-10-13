@@ -92,6 +92,7 @@ namespace ellib {
     for (_iter=0; _iter<maxIter; _iter++) {
       _pot->di = _pot->di * (1 - distStep);
       minimiser->minimise(state, &adjustState);
+      if (checkConvergence()) break;
     }
     return state;
   }
@@ -131,13 +132,18 @@ namespace ellib {
     // Compute gradient magnitude in separation direction
     Vector dg = pot->distGrad(pot->state1.getCoords(), pot->state2.getCoords());
     double dgm = vec::norm(dg);
-    double grad1 = vec::dotProduct(dg, g1) / dgm; // TODO: make these positive
-    double grad2 = vec::dotProduct(dg, g2) / dgm; // vec::abs() needed
+    double grad1 = abs(vec::dotProduct(dg, g1)) / dgm;
+    double grad2 = abs(vec::dotProduct(dg, g2)) / dgm;
     double grad = std::max(sqrt(grad1+grad2), 2.828*eb/pot->di);
 
     // Coefficients
     pot->ke = pot->alpha / (2 * eb);
     pot->kd = grad / (2.828 * pot->beta * pot->di);
+  }
+  
+
+  bool Bitss::checkConvergence() {
+    return false;
   }
 
 
