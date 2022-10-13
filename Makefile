@@ -5,8 +5,8 @@ BUILD_DIR = bin
 LIB_DIR = lib
 LIBS = minim
 
-CXX      = mpic++             # C++ compiler
-CXXFLAGS = -Wall -DPARALLEL   # Flags for the C++ compiler
+CXX      = mpic++#            C++ compiler
+CXXFLAGS = -Wall -DPARALLEL#  Flags for the C++ compiler
 
 TARGET := $(BUILD_DIR)/$(TARGET)
 VPATH = $(SRC_DIR)
@@ -17,9 +17,13 @@ LIB = $(patsubst %,$(BUILD_DIR)/lib%.a, $(LIBS))
 LDLIBS = $(addprefix -l, $(LIBS))
 LDFLAGS = $(addprefix -L, $(BUILD_DIR))
 
-.PHONY: all deps clean check $(LIB)
+.PHONY: all debug deps clean check $(LIB)
 
 all: $(TARGET)
+
+debug: CXXFLAGS += -g
+debug: SUBTARGET = debug
+debug: $(TARGET)
 
 deps: $(LIB)
 
@@ -34,7 +38,7 @@ $(OBJ): $(BUILD_DIR)/%.o: %.cpp $(LIB)
 
 $(LIB): $(BUILD_DIR)/lib%.a:
 	@git submodule update --init $(LIB_DIR)/$*
-	$(MAKE) -sC $(LIB_DIR)/$*
+	$(MAKE) -C $(LIB_DIR)/$* $(SUBTARGET)
 	@ln -sfn ../$(LIB_DIR)/$*/$(INC_DIR) $(INC_DIR)/$*
 	@cp $(LIB_DIR)/$*/$@ $@
 
