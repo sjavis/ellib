@@ -164,7 +164,7 @@ namespace ellib {
       Vector coords2 = _pot->state2.blockCoords();
       Vector ts = interp(coords1, coords2, 0.5);
       Vector g = _pot->state1.gradient(ts);
-      double grms = vec::norm(g*g) / sqrt(g.size());
+      double grms = vec::norm(g) / sqrt(g.size());
       converged = (grms < state.convergence);
     } else if (convergenceMethod == "midpoint change") {
       Vector coords1 = _pot->state1.blockCoords();

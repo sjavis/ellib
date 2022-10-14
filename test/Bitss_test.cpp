@@ -6,11 +6,14 @@
 #include "minim/GradDescent.h"
 #include "minim/Anneal.h"
 #include "minim/utils/mpi.h"
+#include <math.h>
 
 #include "gtest/gtest.h"
 #include "ArraysMatch.h"
 
 using namespace ellib;
+
+typedef std::vector<double> Vector;
 
 
 TEST(BitssTest, DefaultInitialisation) {
@@ -188,6 +191,41 @@ TEST(BitssTest, DistFunc) {
   bitss.setDistFunc(newDist, newGrad);
   EXPECT_EQ(bitssPot->dist({3,0}, {0,4}), 3);
   EXPECT_TRUE(ArraysNear(bitssPot->distGrad({3,0}, {0,4}), {1, 0}, 1e-6));
+}
+
+
+TEST(BitssTest, BitssPotential) {
+  Lj3d pot;
+  Vector x1 = {0,0,0, 1,0,0};
+  Vector x2 = {10,10,10, 12,10,10};
+  State s1 = pot.newState(x1);
+  State s2 = pot.newState(x2);
+  Bitss bitss(s1, s2);
+  auto bitssPot = static_cast<Bitss::BitssPotential*>(bitss.state.pot.get());
+  bitssPot->ke = 2;
+  bitssPot->kd = 2;
+  bitssPot->di = 20;
+  // Test single state energies
+  double e1 = 0;
+  double e2 = 1./1024 - 1./16;
+  EXPECT_FLOAT_EQ(s1.energy(), e1);
+  EXPECT_FLOAT_EQ(s2.energy(), e2);
+  Vector grad1 = {24,0,0, -24,0,0};
+  Vector grad2 = {1./512-1./16,0,0, 1./16-1./512,0,0};
+  EXPECT_TRUE(ArraysNear(s1.gradient(), grad1, 1e-6));
+  EXPECT_TRUE(ArraysNear(s2.gradient(), grad2, 1e-6));
+  // Total energy
+  double d = sqrt(621.);
+  double ee = 2 * pow(e1-e2, 2);
+  double ed = 2 * pow(d-20, 2);
+  EXPECT_FLOAT_EQ(bitss.state.energy(), e1+e2+ee+ed);
+  Vector ge1 = (1 + 4*(e1-e2)) * grad1;
+  Vector ge2 = (1 + 4*(e2-e1)) * grad2;
+  Vector gd = 4 * (1-20/d) * (x1-x2);
+  Vector gtot2 = ge2 - gd;
+  Vector gtot = ge1 + gd;
+  gtot.insert(gtot.end(), gtot2.begin(), gtot2.end());
+  EXPECT_TRUE(ArraysNear(bitss.state.gradient(), gtot, 1e-6));
 }
 
 
