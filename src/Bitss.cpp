@@ -10,6 +10,7 @@
 #include "minim/Anneal.h"
 
 #include "minim/utils/vec.h"
+#include "minim/utils/mpi.h"
 
 namespace ellib {
 
@@ -156,23 +157,23 @@ namespace ellib {
   bool Bitss::checkConvergence() {
     bool converged = false;
     if (convergenceMethod == "distance") {
-      converged = (_pot->di < convergenceDist);
+      converged = (_pot->di <= convergenceDist);
     } else if (convergenceMethod == "relative distance") {
-      converged = (_pot->di/_pot->d0 < convergenceDist);
+      converged = (_pot->di/_pot->d0 <= convergenceDist);
     } else if (convergenceMethod == "midpoint gradient") {
       Vector coords1 = _pot->state1.blockCoords();
       Vector coords2 = _pot->state2.blockCoords();
       Vector ts = interp(coords1, coords2, 0.5);
       Vector g = _pot->state1.gradient(ts);
       double grms = vec::norm(g) / sqrt(g.size());
-      converged = (grms < state.convergence);
+      converged = (grms <= state.convergence);
     } else if (convergenceMethod == "midpoint change") {
       Vector coords1 = _pot->state1.blockCoords();
       Vector coords2 = _pot->state2.blockCoords();
       Vector ts = interp(coords1, coords2, 0.5);
       if (_iter > 0) {
         double diff = _pot->dist(ts, _tsOld);
-        converged = (diff < convergenceDist);
+        converged = (diff <= convergenceDist);
       }
       _tsOld = ts;
     }
@@ -202,6 +203,7 @@ namespace ellib {
 
 
   // TODO: Combine energy and gradient
+  // TODO: Fix gradient to calculate total grad, not block grad
   double Bitss::BitssPotential::energy(const Vector &coords) const {
     // Single state energies
     double e1 = state1.energy();
@@ -211,7 +213,8 @@ namespace ellib {
     double ee = ke * pow(e1-e2, 2);
     double ed = kd * pow(d-di, 2);
     // Total energy
-    return e1 + e2 + ee + ed;
+    double etot = (mpi.rank==0) ? (e1 + e2 + ee + ed) : 0;
+    return etot;
   }
 
   Vector Bitss::BitssPotential::gradient(const Vector &coords) const {
@@ -219,8 +222,8 @@ namespace ellib {
     double e2 = state2.energy();
     double d = dist(state1.getCoords(), state2.getCoords());
     // Single state gradients
-    Vector gs1 = state1.gradient();
-    Vector gs2 = state2.gradient();
+    Vector gs1 = state1.comm.gather(state1.gradient());
+    Vector gs2 = state2.comm.gather(state2.gradient());
     // Energy constraint
     Vector ge1 = (1 + 2*ke*(e1-e2)) * gs1;
     Vector ge2 = (1 + 2*ke*(e2-e1)) * gs2;
