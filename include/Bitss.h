@@ -80,8 +80,7 @@ namespace ellib {
           BitssPotential(const State& state1, const State& state2);
           static State newState(const State& state1, const State& state2);
 
-          double energy(const Vector &coords) const override;
-          Vector gradient(const Vector &coords) const override;
+          void energyGradient(const Vector &coords, double* e, Vector* g) const override;
       };
 
   };

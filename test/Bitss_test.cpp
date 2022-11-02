@@ -213,8 +213,8 @@ TEST(BitssTest, BitssPotential) {
   EXPECT_FLOAT_EQ(s2.energy(), e2);
   Vector grad1 = {24,0,0, -24,0,0};
   Vector grad2 = {3./512-3./16,0,0, 3./16-3./512,0,0};
-  EXPECT_TRUE(ArraysNear(s1.comm.gather(s1.gradient()), grad1, 1e-6));
-  EXPECT_TRUE(ArraysNear(s2.comm.gather(s2.gradient()), grad2, 1e-6));
+  EXPECT_TRUE(ArraysNear(s1.gradient(), grad1, 1e-6));
+  EXPECT_TRUE(ArraysNear(s2.gradient(), grad2, 1e-6));
   // Total energy
   double d = sqrt(621.);
   double ee = 2 * pow(e1-e2, 2);

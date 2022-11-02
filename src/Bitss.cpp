@@ -124,16 +124,18 @@ namespace ellib {
 
   void Bitss::recomputeCoefficients(State& state) {
     auto pot = static_cast<BitssPotential*>(state.pot.get());
-    double e1 = pot->state1.energy();
-    double e2 = pot->state2.energy();
-    Vector g1 = pot->state1.gradient();
-    Vector g2 = pot->state2.gradient();
+    double e1;
+    double e2;
+    Vector g1;
+    Vector g2;
+    pot->state1.energyGradient(&e1, &g1);
+    pot->state2.energyGradient(&e2, &g2);
     // Estimate energy barrier
     int nInterp = 10;
     double emin = std::min(e1, e2);
     double emax = emin;
-    Vector coords1 = pot->state1.blockCoords(); // TODO: Check if this needs the halo
-    Vector coords2 = pot->state2.blockCoords();
+    Vector coords1 = pot->state1.getCoords();
+    Vector coords2 = pot->state2.getCoords();
     for (int i=1; i<nInterp; i++) {
       double t = double(i) / nInterp;
       Vector xtmp = interp(coords1, coords2, t);
@@ -142,7 +144,7 @@ namespace ellib {
     double eb = emax - emin; // TODO: ensure eb is not zero
 
     // Compute gradient magnitude in separation direction
-    Vector dg = pot->distGrad(pot->state1.getCoords(), pot->state2.getCoords());
+    Vector dg = pot->distGrad(coords1, coords2);
     double dgm = vec::norm(dg);
     double grad1 = abs(vec::dotProduct(dg, g1)) / dgm;
     double grad2 = abs(vec::dotProduct(dg, g2)) / dgm;
@@ -192,7 +194,9 @@ namespace ellib {
   // Potential
   Bitss::BitssPotential::BitssPotential(const State& state1, const State& state2)
     : state1(state1), state2(state2)
-  {}
+  {
+    _energyGradientDef = true;
+  }
 
   State Bitss::BitssPotential::newState(const State& state1, const State& state2) {
     Vector coords = state1.getCoords();
@@ -202,39 +206,28 @@ namespace ellib {
   }
 
 
-  // TODO: Combine energy and gradient
-  // TODO: Fix gradient to calculate total grad, not block grad
-  double Bitss::BitssPotential::energy(const Vector &coords) const {
-    // Single state energies
+  void Bitss::BitssPotential::energyGradient(const Vector &coords, double* e, Vector* g) const {
     double e1 = state1.energy();
     double e2 = state2.energy();
     double d = dist(state1.getCoords(), state2.getCoords());
-    // Constraints
-    double ee = ke * pow(e1-e2, 2);
-    double ed = kd * pow(d-di, 2);
-    // Total energy
-    double etot = (mpi.rank==0) ? (e1 + e2 + ee + ed) : 0;
-    return etot;
-  }
-
-  Vector Bitss::BitssPotential::gradient(const Vector &coords) const {
-    double e1 = state1.energy();
-    double e2 = state2.energy();
-    double d = dist(state1.getCoords(), state2.getCoords());
-    // Single state gradients
-    Vector gs1 = state1.comm.gather(state1.gradient());
-    Vector gs2 = state2.comm.gather(state2.gradient());
-    // Energy constraint
-    Vector ge1 = (1 + 2*ke*(e1-e2)) * gs1;
-    Vector ge2 = (1 + 2*ke*(e2-e1)) * gs2;
-    // Distance constraint
-    Vector distg = distGrad(state1.getCoords(), state2.getCoords());
-    Vector gd = 2 * kd * (d - di) * distg;
-    // Total gradient
-    Vector g = ge1 + gd;
-    Vector g2 = ge2 - gd;
-    g.insert(g.end(), g2.begin(), g2.end());
-    return g;
+    // Energy
+    if (e != nullptr) {
+      double ee = ke * pow(e1-e2, 2);
+      double ed = kd * pow(d-di, 2);
+      *e = e1 + e2 + ee + ed;
+    }
+    // Gradient
+    if (g != nullptr) {
+      *g = Vector(coords.size());
+      Vector gs1 = state1.gradient();
+      Vector gs2 = state2.gradient();
+      Vector dGrad = distGrad(state1.getCoords(), state2.getCoords());
+      Vector gd1 = 2 * kd * (d - di) * dGrad;
+      Vector g1 = (1 + 2*ke*(e1-e2))*gs1 + gd1;
+      Vector g2 = (1 + 2*ke*(e2-e1))*gs2 - gd1;
+      std::copy(g1.begin(), g1.end(), (*g).begin());
+      std::copy(g2.begin(), g2.end(), (*g).begin()+state1.ndof);
+    }
   }
 
 
