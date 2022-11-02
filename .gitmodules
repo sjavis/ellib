@@ -5,3 +5,6 @@
 	path = test/googletest
 	url = https://github.com/google/googletest
         ignore = dirty
+[submodule "test/gtest-mpi-listener"]
+	path = test/gtest-mpi-listener
+	url = https://github.com/LLNL/gtest-mpi-listener

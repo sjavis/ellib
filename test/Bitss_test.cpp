@@ -1,5 +1,9 @@
 #include "Bitss.h"
 
+#include "gtest/gtest.h"
+#include "gtest-mpi-listener.hpp"
+#include "ArraysMatch.h"
+
 #include "minim/Lj3d.h"
 #include "minim/Lbfgs.h"
 #include "minim/Fire.h"
@@ -7,9 +11,6 @@
 #include "minim/Anneal.h"
 #include "minim/utils/mpi.h"
 #include <math.h>
-
-#include "gtest/gtest.h"
-#include "ArraysMatch.h"
 
 using namespace ellib;
 
@@ -231,14 +232,14 @@ TEST(BitssTest, BitssPotential) {
 
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
-  mpiInit(&argc, &argv);
+  MPI_Init(&argc, &argv);
+  mpi.getSizeRank(MPI_COMM_WORLD);
 
-  // Ensure only one processor prints
-  ::testing::TestEventListeners& listeners =
-      ::testing::UnitTest::GetInstance()->listeners();
-  if (mpi.rank != 0) {
-      delete listeners.Release(listeners.default_result_printer());
-  }
+  // Add an MPI listener (https://github.com/LLNL/gtest-mpi-listener)
+  ::testing::AddGlobalTestEnvironment(new GTestMPIListener::MPIEnvironment);
+  ::testing::TestEventListeners& listeners = ::testing::UnitTest::GetInstance()->listeners();
+  ::testing::TestEventListener *l = listeners.Release(listeners.default_result_printer());
+  listeners.Append(new GTestMPIListener::MPIWrapperPrinter(l, MPI_COMM_WORLD));
 
   return RUN_ALL_TESTS();
 }
