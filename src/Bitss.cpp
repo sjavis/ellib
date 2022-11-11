@@ -99,7 +99,7 @@ namespace ellib {
 
 
   State Bitss::run() {
-    _pot->d0 = _pot->dist(_pot->state1.getCoords(), _pot->state2.getCoords());
+    _pot->d0 = _pot->dist(_pot->state1.coords(), _pot->state2.coords());
     _pot->di = _pot->d0;
     for (_iter=0; _iter<maxIter; _iter++) {
       _pot->di = _pot->di * (1 - distStep);
@@ -113,10 +113,11 @@ namespace ellib {
   void Bitss::adjustState(int iter, State& state) {
     auto pot = static_cast<BitssPotential*>(state.pot.get());
     // Update the coordinates for the individual states
-    Vector coords = state.getCoords();
+    // TODO: Make these point to the same value, if the coords are updated the single states are only updated on the next loop
+    Vector coords = state.coords();
     auto coordsMid = coords.begin() + pot->state1.ndof;
-    pot->state1.setCoords(Vector(coords.begin(), coordsMid));
-    pot->state2.setCoords(Vector(coordsMid, coords.end()));
+    pot->state1.coords(Vector(coords.begin(), coordsMid));
+    pot->state2.coords(Vector(coordsMid, coords.end()));
     // Recompute the BITSS coefficients
     if (iter % pot->coefIter == 0) recomputeCoefficients(state);
   }
@@ -124,18 +125,20 @@ namespace ellib {
 
   void Bitss::recomputeCoefficients(State& state) {
     auto pot = static_cast<BitssPotential*>(state.pot.get());
+    Vector coords = state.coords();
+    auto coordsMid = coords.begin() + pot->state1.ndof;
+    Vector coords1(coords.begin(), coordsMid);
+    Vector coords2(coordsMid, coords.end());
     double e1;
     double e2;
     Vector g1;
     Vector g2;
-    pot->state1.energyGradient(&e1, &g1);
-    pot->state2.energyGradient(&e2, &g2);
+    pot->state1.energyGradient(coords1, &e1, &g1);
+    pot->state2.energyGradient(coords2, &e2, &g2);
     // Estimate energy barrier
     int nInterp = 10;
     double emin = std::min(e1, e2);
-    double emax = emin;
-    Vector coords1 = pot->state1.getCoords();
-    Vector coords2 = pot->state2.getCoords();
+    double emax = std::max(e1, e2);
     for (int i=1; i<nInterp; i++) {
       double t = double(i) / nInterp;
       Vector xtmp = interp(coords1, coords2, t);
@@ -199,17 +202,20 @@ namespace ellib {
   }
 
   State Bitss::BitssPotential::newState(const State& state1, const State& state2) {
-    Vector coords = state1.getCoords();
-    Vector coords2 = state2.getCoords();
+    Vector coords = state1.coords();
+    Vector coords2 = state2.coords();
     coords.insert(coords.end(), coords2.begin(), coords2.end());
     return State(BitssPotential(state1, state2), coords);
   }
 
 
   void Bitss::BitssPotential::energyGradient(const Vector &coords, double* e, Vector* g) const {
-    double e1 = state1.energy();
-    double e2 = state2.energy();
-    double d = dist(state1.getCoords(), state2.getCoords());
+    auto coordsMid = coords.begin() + state1.ndof;
+    Vector coords1(coords.begin(), coordsMid);
+    Vector coords2(coordsMid, coords.end());
+    double e1 = state1.energy(coords1);
+    double e2 = state2.energy(coords2);
+    double d = dist(coords1, coords2);
     // Energy
     if (e != nullptr) {
       double ee = ke * pow(e1-e2, 2);
@@ -219,9 +225,9 @@ namespace ellib {
     // Gradient
     if (g != nullptr) {
       *g = Vector(coords.size());
-      Vector gs1 = state1.gradient();
-      Vector gs2 = state2.gradient();
-      Vector dGrad = distGrad(state1.getCoords(), state2.getCoords());
+      Vector gs1 = state1.gradient(coords1); //TODO: Use energyGradient instead
+      Vector gs2 = state2.gradient(coords2);
+      Vector dGrad = distGrad(coords1, coords2);
       Vector gd1 = 2 * kd * (d - di) * dGrad;
       Vector g1 = (1 + 2*ke*(e1-e2))*gs1 + gd1;
       Vector g2 = (1 + 2*ke*(e2-e1))*gs2 - gd1;

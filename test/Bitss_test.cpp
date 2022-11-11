@@ -28,12 +28,12 @@ TEST(BitssTest, DefaultInitialisation) {
   EXPECT_THROW(dynamic_cast<Fire&>(*bitss.minimiser), std::bad_cast);
 
   // State coordinates
-  auto coords = bitss.state.getCoords();
+  auto coords = bitss.state.coords();
   auto coords1 = std::vector<double>(coords.begin(), coords.begin()+s1.ndof);
   auto coords2 = std::vector<double>(coords.begin()+s1.ndof, coords.end());
   EXPECT_EQ(bitss.state.ndof, s1.ndof+s2.ndof);
-  EXPECT_EQ(coords1, s1.getCoords());
-  EXPECT_EQ(coords2, s2.getCoords());
+  EXPECT_EQ(coords1, s1.coords());
+  EXPECT_EQ(coords2, s2.coords());
 
   // Check single state potentials are correct
   ASSERT_NO_THROW(dynamic_cast<Bitss::BitssPotential&>(*bitss.state.pot));
@@ -227,6 +227,25 @@ TEST(BitssTest, BitssPotential) {
   Vector gtot = ge1 + gd;
   gtot.insert(gtot.end(), gtot2.begin(), gtot2.end());
   EXPECT_TRUE(ArraysNear(bitss.state.gradient(), gtot, 1e-6));
+}
+
+
+TEST(BitssTest, Toy2d) {
+  auto eFunc = [](const Vector& coords) {
+    double x = coords[0], y = coords[1];
+    return pow(x*x-1, 2) + y*y;
+  };
+  auto gFunc = [](const Vector& coords) {
+    double x = coords[0], y = coords[1];
+    return Vector({4*x*(x*x-1), 2*y});
+  };
+  Potential pot(eFunc, gFunc);
+  State s1 = pot.newState({-1, 1});
+  State s2 = pot.newState({1, 0});
+  Bitss bitss(s1, s2);
+  Vector result = bitss.run().coords();
+  Vector mid = {(result[0]+result[2])/2, (result[1]+result[3])/2};
+  EXPECT_LT(vec::norm(mid), 1e-6);
 }
 
 
