@@ -213,26 +213,27 @@ namespace ellib {
     auto coordsMid = coords.begin() + state1.ndof;
     Vector coords1(coords.begin(), coordsMid);
     Vector coords2(coordsMid, coords.end());
-    double e1 = state1.energy(coords1);
-    double e2 = state2.energy(coords2);
     double d = dist(coords1, coords2);
-    // Energy
+    // Single state energies / gradients
+    double e1, e2;
+    Vector g1, g2;
+    state1.energyGradient(coords1, &e1, (g==nullptr)?nullptr:&g1);
+    state2.energyGradient(coords2, &e2, (g==nullptr)?nullptr:&g2);
+    // Total energy
     if (e != nullptr) {
       double ee = ke * pow(e1-e2, 2);
       double ed = kd * pow(d-di, 2);
       *e = e1 + e2 + ee + ed;
     }
-    // Gradient
+    // Total gradient
     if (g != nullptr) {
       *g = Vector(coords.size());
-      Vector gs1 = state1.gradient(coords1); //TODO: Use energyGradient instead
-      Vector gs2 = state2.gradient(coords2);
       Vector dGrad = distGrad(coords1, coords2);
       Vector gd1 = 2 * kd * (d - di) * dGrad;
-      Vector g1 = (1 + 2*ke*(e1-e2))*gs1 + gd1;
-      Vector g2 = (1 + 2*ke*(e2-e1))*gs2 - gd1;
-      std::copy(g1.begin(), g1.end(), (*g).begin());
-      std::copy(g2.begin(), g2.end(), (*g).begin()+state1.ndof);
+      Vector gtot1 = (1 + 2*ke*(e1-e2))*g1 + gd1;
+      Vector gtot2 = (1 + 2*ke*(e2-e1))*g2 - gd1;
+      std::copy(gtot1.begin(), gtot1.end(), (*g).begin());
+      std::copy(gtot2.begin(), gtot2.end(), (*g).begin()+state1.ndof);
     }
   }
 
