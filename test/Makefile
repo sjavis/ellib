@@ -1,4 +1,4 @@
-TESTS = Bitss_test
+TESTS = Bitss_test GenAlg_test
 RUN_TESTS = $(addprefix run_, $(TESTS))
 
 ROOT_DIR = ..

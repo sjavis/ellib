@@ -17,6 +17,48 @@ namespace ellib {
   {}
 
 
+  GenAlg& GenAlg::setMaxIter(int maxIter) {
+    this->maxIter = maxIter;
+    return *this;
+  }
+
+  GenAlg& GenAlg::setPopSize(int popSize) {
+    this->popSize = popSize;
+    return *this;
+  }
+
+  GenAlg& GenAlg::setNumElites(int numElites) {
+    this->numElites = numElites;
+    return *this;
+  }
+
+  GenAlg& GenAlg::setSelectionRate(double selectionRate) {
+    this->selectionRate = selectionRate;
+    return *this;
+  }
+
+  GenAlg& GenAlg::setMutationRate(double mutationRate) {
+    this->mutationRate = mutationRate;
+    return *this;
+  }
+
+  GenAlg& GenAlg::setStateGen(StateFn stateGen) {
+    this->stateGen = stateGen;
+    return *this;
+  }
+
+  GenAlg& GenAlg::setBounds(Vector bound1, Vector bound2) {
+    bounds = std::vector<Vector>(bound1.size());
+    for (size_t i=0; i<bound1.size(); i++) {
+      if (bound1[i]<=bound2[i]) {
+        bounds[i] = {bound1[i], bound2[i]};
+      } else {
+        bounds[i] = {bound2[i], bound1[i]};
+      }
+    }
+    return *this;
+  }
+
   GenAlg& GenAlg::setMinimiser(const std::string& min) {
     std::string string = min;
     std::transform(string.begin(), string.end(), string.begin(),
@@ -40,16 +82,9 @@ namespace ellib {
     return *this;
   }
 
-  GenAlg& GenAlg::setBounds(Vector bound1, Vector bound2) {
-    return *this;
-  }
-
-  GenAlg& GenAlg::setStateGen(StateFn stateGen) {
-    return *this;
-  }
-
 
   Vector GenAlg::run() {
+    return Vector();
   }
 
 

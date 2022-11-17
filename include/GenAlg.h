@@ -18,11 +18,6 @@ namespace ellib {
       GenAlg(Potential& pot);
       ~GenAlg() {};
 
-      GenAlg& setMinimiser(const std::string& min="Lbfgs");
-      GenAlg& setMinimiser(std::unique_ptr<Minimiser> min);
-      GenAlg& setBounds(Vector bound1, Vector bound2);
-      GenAlg& setStateGen(StateFn stateGen);
-
       Vector run();
 
       void initialise();
@@ -31,16 +26,27 @@ namespace ellib {
       void mutate();
       void checkComplete();
 
+      GenAlg& setMaxIter(int maxIter);
+      GenAlg& setPopSize(int popSize);
+      GenAlg& setNumElites(int numElites);
+      GenAlg& setSelectionRate(double selectionRate);
+      GenAlg& setMutationRate(double mutationRate);
+      GenAlg& setStateGen(StateFn stateGen);
+      GenAlg& setBounds(Vector bound1, Vector bound2);
+      GenAlg& setMinimiser(const std::string& min);
+      GenAlg& setMinimiser(std::unique_ptr<Minimiser> min);
+
       int maxIter = 100;
-      int populationSize = 100;
+      int popSize = 100;
       int numElites = 1;
       double selectionRate = 0.3;
       double mutationRate = 0.1;
-      StateFn stateGen;
-      std::vector<Vector> bounds;
-      std::vector<State> pop;
-      std::unique_ptr<Minimiser> min;
+      StateFn stateGen = nullptr;
+      std::vector<Vector> bounds = std::vector<Vector>();
+      std::unique_ptr<Minimiser> min = nullptr;
+
       std::unique_ptr<Potential> pot;
+      std::vector<State> pop;
   };
 }
 
