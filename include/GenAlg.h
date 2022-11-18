@@ -21,10 +21,11 @@ namespace ellib {
       Vector run();
 
       void initialise();
-      void select();
-      void crossover();
+      std::vector<State> select();
+      void crossover(const std::vector<State>& parents);
       void mutate();
-      void checkComplete();
+      void minimise();
+      bool checkComplete();
 
       GenAlg& setMaxIter(int maxIter);
       GenAlg& setPopSize(int popSize);
@@ -47,7 +48,12 @@ namespace ellib {
 
       std::unique_ptr<Potential> pot;
       std::vector<State> pop;
+
+    private:
+      Vector getEnergies();
+      std::vector<State> getBestStates(int n, Vector energies);
   };
+
 }
 
 #endif

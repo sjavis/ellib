@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <stdexcept>
+#include <numeric>
 #include "minim/Lbfgs.h"
 #include "minim/Fire.h"
 #include "minim/GradDescent.h"
@@ -84,7 +85,19 @@ namespace ellib {
 
 
   Vector GenAlg::run() {
-    return Vector();
+    initialise();
+    for (int iter=0; iter<maxIter; iter++) {
+      if (iter > 0) {
+        auto parents = select();
+        crossover(parents);
+        mutate();
+      }
+      minimise();
+      if (checkComplete()) break;
+    }
+
+    auto bestState = getBestStates(1, getEnergies())[0];
+    return bestState.coords();
   }
 
 
@@ -92,11 +105,12 @@ namespace ellib {
   }
 
 
-  void GenAlg::select() {
+  std::vector<State> GenAlg::select() {
+    return std::vector<State>();
   }
 
 
-  void GenAlg::crossover() {
+  void GenAlg::crossover(const std::vector<State>& parents) {
   }
 
 
@@ -104,7 +118,40 @@ namespace ellib {
   }
 
 
-  void GenAlg::checkComplete() {
+  void GenAlg::minimise() {
+    if (min != nullptr) {
+      for (auto state: pop) {
+        min->minimise(state);
+      }
+    }
+  }
+
+
+  bool GenAlg::checkComplete() {
+    return false;
+  }
+
+
+  Vector GenAlg::getEnergies() {
+    Vector energies(popSize);
+    for (int i=0; i<popSize; i++) {
+      energies[i] = pop[i].energy();
+    }
+    return energies;
+  }
+
+
+  std::vector<State> GenAlg::getBestStates(int n, Vector energies) {
+    // Get the indicies of the lowest energy states
+    std::vector<int> index(popSize);
+    std::iota(index.begin(), index.end(), 0);
+    std::partial_sort(index.begin(), index.begin()+n, index.end(), [energies](int i, int j){ return energies[i]<energies[j]; });
+    // Get the vector of the best states
+    std::vector<State> best(n, pop[0]); // Assign pop[0] because State has no default initialiser
+    for (int i=0; i<n; i++) {
+      best[i] = pop[index[i]];
+    }
+    return best;
   }
 
 }
