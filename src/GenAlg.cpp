@@ -7,6 +7,7 @@
 #include "minim/Fire.h"
 #include "minim/GradDescent.h"
 #include "minim/Anneal.h"
+#include "minim/utils/vec.h"
 
 namespace ellib {
 
@@ -49,12 +50,11 @@ namespace ellib {
   }
 
   GenAlg& GenAlg::setBounds(Vector bound1, Vector bound2) {
-    bounds = std::vector<Vector>(bound1.size());
+    bounds = {bound1, bound2};
     for (size_t i=0; i<bound1.size(); i++) {
-      if (bound1[i]<=bound2[i]) {
-        bounds[i] = {bound1[i], bound2[i]};
-      } else {
-        bounds[i] = {bound2[i], bound1[i]};
+      if (bound1[i] > bound2[i]) {
+        bounds[0][i] = bound2[i];
+        bounds[1][i] = bound1[i];
       }
     }
     return *this;
@@ -89,8 +89,7 @@ namespace ellib {
     for (int iter=0; iter<maxIter; iter++) {
       if (iter > 0) {
         auto parents = select();
-        crossover(parents);
-        mutate();
+        newGeneration(parents);
       }
       minimise();
       if (checkComplete()) break;
@@ -102,19 +101,48 @@ namespace ellib {
 
 
   void GenAlg::initialise() {
+    if (stateGen != nullptr) {
+      pop = std::vector<State>(popSize, stateGen());
+      for (int i=1; i<popSize; i++) {
+        pop[i] = stateGen();
+      }
+    } else if (bounds.size() > 0) {
+      pop = std::vector<State>(popSize, stateGen());
+      for (int i=0; i<popSize; i++) {
+        Vector coords = vec::random(bounds[0].size(), 0.5) + 0.5;
+        coords = coords * (bounds[1] - bounds[0]) + bounds[0];
+        pop[i] = pot->newState(coords);
+      }
+    } else {
+      std::logic_error("Either a state generator function or coordinate boundaries must be supplied");
+    }
   }
 
 
   std::vector<State> GenAlg::select() {
-    return std::vector<State>();
+    int nParents = selectionRate * popSize;
+    return getBestStates(nParents, getEnergies());
   }
 
 
-  void GenAlg::crossover(const std::vector<State>& parents) {
-  }
-
-
-  void GenAlg::mutate() {
+  void GenAlg::newGeneration(const std::vector<State>& parents) {
+    // Directly set elites
+    std::copy(parents.begin(), parents.begin()+numElites, pop.begin());
+    // Fill the remaining population
+    for (int iPop=numElites; iPop<popSize; iPop++) {
+      pop[iPop] = parents[randI(popSize)];
+      int ndof = pop[iPop].ndof;
+      auto block = pop[iPop].blockCoords();
+      auto block2 = parents[randI(popSize)].blockCoords(); // Note: This may end up with the same parents
+      for (int iCoord=0; iCoord<ndof; iCoord++) {
+        // Crossover
+        if (randF() < 0.5) block[iCoord] = block2[iCoord];
+        // Mutation
+        if (randF() < mutationRate) block[iCoord] += pertubation * (2*randF()-1);
+      }
+      pop[iPop].blockCoords(block);
+      pop[iPop].communicate();
+    }
   }
 
 
@@ -153,5 +181,16 @@ namespace ellib {
     }
     return best;
   }
+
+  float GenAlg::randF() {
+    return std::uniform_real_distribution<>{0, 1}(randEng);
+  }
+
+  int GenAlg::randI(int n) {
+    return std::uniform_int_distribution<>{0, n-1}(randEng);
+  }
+
+  unsigned seed = std::random_device()();
+  thread_local std::mt19937 GenAlg::randEng(seed);
 
 }

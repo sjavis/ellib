@@ -42,8 +42,8 @@ TEST(GenAlgTest, InitClass) {
   EXPECT_TRUE(ArraysNear(ga.stateGen().coords(), {0}, 1e-6));
 
   ga.setBounds({0,0,0}, {1,1,1});
-  EXPECT_EQ(ga.bounds.size(), 3);
-  EXPECT_TRUE(ArraysNear(ga.bounds[0], {0,1}, 1e-6));
+  EXPECT_EQ(ga.bounds.size(), 2);
+  EXPECT_TRUE(ArraysNear(ga.bounds[1], {1,1,1}, 1e-6));
 
   ga.setMinimiser("lbfgs");
   EXPECT_NO_THROW(dynamic_cast<Lbfgs&>(*ga.min));

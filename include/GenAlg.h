@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <random>
 #include "minim/State.h"
 // #include "minim/Potential.h"
 #include "minim/Minimiser.h"
@@ -22,8 +23,7 @@ namespace ellib {
 
       void initialise();
       std::vector<State> select();
-      void crossover(const std::vector<State>& parents);
-      void mutate();
+      void newGeneration(const std::vector<State>& parents);
       void minimise();
       bool checkComplete();
 
@@ -42,6 +42,7 @@ namespace ellib {
       int numElites = 1;
       double selectionRate = 0.3;
       double mutationRate = 0.1;
+      double pertubation = 1; // TODO
       StateFn stateGen = nullptr;
       std::vector<Vector> bounds = std::vector<Vector>();
       std::unique_ptr<Minimiser> min = nullptr;
@@ -52,6 +53,10 @@ namespace ellib {
     private:
       Vector getEnergies();
       std::vector<State> getBestStates(int n, Vector energies);
+
+      static thread_local std::mt19937 randEng;
+      static float randF();
+      static int randI(int n);
   };
 
 }
