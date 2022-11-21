@@ -60,6 +60,11 @@ namespace ellib {
     return *this;
   }
 
+  GenAlg& GenAlg::setPertubation(Vector pertubation) {
+    this->pertubation = pertubation;
+    return *this;
+  }
+
   GenAlg& GenAlg::setMinimiser(const std::string& min) {
     std::string string = min;
     std::transform(string.begin(), string.end(), string.begin(),
@@ -101,12 +106,13 @@ namespace ellib {
 
 
   void GenAlg::initialise() {
+    // Initialise states
     if (stateGen != nullptr) {
       pop = std::vector<State>(popSize, stateGen());
       for (int i=1; i<popSize; i++) {
         pop[i] = stateGen();
       }
-    } else if (bounds.size() > 0) {
+    } else if (!bounds.empty()) {
       pop = std::vector<State>(popSize, stateGen());
       for (int i=0; i<popSize; i++) {
         Vector coords = vec::random(bounds[0].size(), 0.5) + 0.5;
@@ -115,6 +121,26 @@ namespace ellib {
       }
     } else {
       std::logic_error("Either a state generator function or coordinate boundaries must be supplied");
+    }
+    
+    // Assign pertubation size
+    if (pertubation.empty()) {
+      if (bounds.empty()) {
+        int ndof = pop[0].ndof;
+        std::vector<Vector> allCoords(ndof, Vector(popSize));
+        for (int j=0; j<popSize; j++) {
+          Vector stateCoords = pop[j].coords();
+          for (int i=0; i<ndof; i++) {
+            allCoords[i][j] = stateCoords[i];
+          }
+        }
+        bounds = std::vector<Vector>(2, Vector(ndof));
+        for (int i=0; i<ndof; i++) {
+          bounds[0][i] = *std::min_element(allCoords[i].begin(), allCoords[i].end());
+          bounds[1][i] = *std::max_element(allCoords[i].begin(), allCoords[i].end());
+        }
+      }
+      setPertubation(0.01*(bounds[1] - bounds[0]));
     }
   }
 
@@ -138,7 +164,7 @@ namespace ellib {
         // Crossover
         if (randF() < 0.5) block[iCoord] = block2[iCoord];
         // Mutation
-        if (randF() < mutationRate) block[iCoord] += pertubation * (2*randF()-1);
+        if (randF() < mutationRate) block[iCoord] += pertubation[iCoord] * (2*randF()-1);
       }
       pop[iPop].blockCoords(block);
       pop[iPop].communicate();
