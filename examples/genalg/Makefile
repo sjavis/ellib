@@ -13,4 +13,4 @@ debug: CXXFLAGS += -g
 debug: all
 
 clean:
-	rm run.exe
+	rm run.exe output.txt
