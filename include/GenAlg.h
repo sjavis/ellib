@@ -4,8 +4,8 @@
 #include <vector>
 #include <string>
 #include <random>
+#include <functional>
 #include "minim/State.h"
-// #include "minim/Potential.h"
 #include "minim/Minimiser.h"
 
 namespace ellib {
@@ -13,6 +13,7 @@ namespace ellib {
 
   class GenAlg {
     typedef std::vector<double> Vector;
+    typedef std::vector<Vector> Vector2d;
     typedef State (*StateFn)();
 
     public:
@@ -37,6 +38,7 @@ namespace ellib {
       GenAlg& setPertubation(Vector pertubation);
       GenAlg& setMinimiser(const std::string& min);
       GenAlg& setMinimiser(std::unique_ptr<Minimiser> min);
+      GenAlg& setIterFn(std::function<void(std::vector<State>&)> iterFn);
 
       int maxIter = 100;
       int popSize = 100;
@@ -44,9 +46,10 @@ namespace ellib {
       double selectionRate = 0.3;
       double mutationRate = 0.1;
       Vector pertubation = Vector();
-      std::vector<Vector> bounds = std::vector<Vector>();
+      Vector2d bounds = Vector2d();
       StateFn stateGen = nullptr;
       std::unique_ptr<Minimiser> min = nullptr;
+      std::function<void(std::vector<State>&)> iterFn;
 
       std::unique_ptr<Potential> pot;
       std::vector<State> pop;

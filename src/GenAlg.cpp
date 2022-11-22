@@ -12,6 +12,7 @@
 namespace ellib {
 
   typedef std::vector<double> Vector;
+  typedef std::vector<Vector> Vector2d;
 
 
   GenAlg::GenAlg(Potential& pot)
@@ -88,6 +89,11 @@ namespace ellib {
     return *this;
   }
 
+  GenAlg& GenAlg::setIterFn(std::function<void(std::vector<State>&)> iterFn) {
+    this->iterFn = iterFn;
+    return *this;
+  }
+
 
   Vector GenAlg::run() {
     initialise();
@@ -97,6 +103,7 @@ namespace ellib {
         newGeneration(parents);
       }
       minimise();
+      if (iterFn) iterFn(pop);
       if (checkComplete()) break;
     }
 
@@ -129,14 +136,14 @@ namespace ellib {
     if (pertubation.empty()) {
       if (bounds.empty()) {
         int ndof = pop[0].ndof;
-        std::vector<Vector> allCoords(ndof, Vector(popSize));
+        Vector2d allCoords(ndof, Vector(popSize));
         for (int j=0; j<popSize; j++) {
           Vector stateCoords = pop[j].coords();
           for (int i=0; i<ndof; i++) {
             allCoords[i][j] = stateCoords[i];
           }
         }
-        bounds = std::vector<Vector>(2, Vector(ndof));
+        bounds = Vector2d(2, Vector(ndof));
         for (int i=0; i<ndof; i++) {
           bounds[0][i] = *std::min_element(allCoords[i].begin(), allCoords[i].end());
           bounds[1][i] = *std::max_element(allCoords[i].begin(), allCoords[i].end());
