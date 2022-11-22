@@ -113,9 +113,11 @@ namespace ellib {
         pop[i] = stateGen();
       }
     } else if (!bounds.empty()) {
-      pop = std::vector<State>(popSize, stateGen());
-      for (int i=0; i<popSize; i++) {
-        Vector coords = vec::random(bounds[0].size(), 0.5) + 0.5;
+      State state1 = pot->newState( (bounds[1]+bounds[0])/2 );
+      pop = std::vector<State>(popSize, state1);
+      int ndof = state1.ndof;
+      for (int i=1; i<popSize; i++) {
+        Vector coords = vec::random(ndof, 0.5) + 0.5;
         coords = coords * (bounds[1] - bounds[0]) + bounds[0];
         pop[i] = pot->newState(coords);
       }
@@ -147,6 +149,7 @@ namespace ellib {
 
   std::vector<State> GenAlg::select() {
     int nParents = selectionRate * popSize;
+    nParents = std::max({nParents, numElites, 1});
     return getBestStates(nParents, getEnergies());
   }
 
@@ -156,11 +159,14 @@ namespace ellib {
     std::copy(parents.begin(), parents.begin()+numElites, pop.begin());
     // Fill the remaining population
     for (int iPop=numElites; iPop<popSize; iPop++) {
-      pop[iPop] = parents[randI(popSize)];
-      int ndof = pop[iPop].ndof;
-      auto block = pop[iPop].blockCoords();
-      auto block2 = parents[randI(popSize)].blockCoords(); // Note: This may end up with the same parents
-      for (int iCoord=0; iCoord<ndof; iCoord++) {
+      int i1 = randI(parents.size());
+      int i2 = (randI(parents.size()-1) + i1+1) % parents.size(); // Ensure that i2 != i1
+      pop[iPop].comm.bcast(i1);
+      pop[iPop].comm.bcast(i2);
+      auto block = parents[i1].blockCoords();
+      auto block2 = parents[i2].blockCoords();
+      int nblock = pop[iPop].comm.nblock;
+      for (int iCoord=0; iCoord<nblock; iCoord++) {
         // Crossover
         if (randF() < 0.5) block[iCoord] = block2[iCoord];
         // Mutation
@@ -174,7 +180,7 @@ namespace ellib {
 
   void GenAlg::minimise() {
     if (min != nullptr) {
-      for (auto state: pop) {
+      for (auto &state: pop) {
         min->minimise(state);
       }
     }

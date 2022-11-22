@@ -1,13 +1,18 @@
 #include "ellib.h"
 
-int main(int argc, char** argv) {
-  ellib::mpiInit(&argc, &argv);
+using namespace ellib;
+typedef std::vector<double> Vector;
 
-  ellib::Lj3d pot;
-  ellib::GenAlg ga(pot);
-  ga.setMinimiser("lbfgs").setBounds({-1,-1,-1,-1,-1,-1}, {1,1,1,1,1,1});
+int main(int argc, char** argv) {
+  mpiInit(&argc, &argv);
+
+  auto eFunc = [](const Vector& x){ return x[0]*x[0] + x[1]*x[1]; };
+  auto gFunc = [](const Vector& x){ return Vector{2*x[0], 2*x[1]}; };
+  Potential pot(eFunc, gFunc);
+  GenAlg ga(pot);
+  ga.setBounds({-1,-1}, {2,2});
   auto result = ga.run();
-  ellib::print(result);
+  print(result);
 
   return 0;
 }
