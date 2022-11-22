@@ -18,6 +18,8 @@ namespace ellib {
 
     public:
       GenAlg(Potential& pot);
+      GenAlg(const GenAlg& genAlg);
+      GenAlg& operator=(const GenAlg& genAlg);
       ~GenAlg() {};
 
       Vector run();
@@ -51,8 +53,8 @@ namespace ellib {
       std::unique_ptr<Minimiser> min = nullptr;
       std::function<void(std::vector<State>&)> iterFn;
 
-      std::unique_ptr<Potential> pot;
       std::vector<State> pop;
+      std::unique_ptr<Potential> pot;
 
     private:
       Vector getEnergies();

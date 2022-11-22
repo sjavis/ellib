@@ -19,6 +19,38 @@ namespace ellib {
     : pot(pot.clone())
   {}
 
+  GenAlg::GenAlg(const GenAlg& genAlg)
+    : maxIter(genAlg.maxIter),
+      popSize(genAlg.popSize),
+      numElites(genAlg.numElites),
+      selectionRate(genAlg.selectionRate),
+      mutationRate(genAlg.mutationRate),
+      pertubation(genAlg.pertubation),
+      bounds(genAlg.bounds),
+      iterFn(genAlg.iterFn),
+      pop(genAlg.pop)
+  {
+    if (genAlg.stateGen) stateGen = genAlg.stateGen;
+    if (genAlg.min) min = genAlg.min->clone();
+    if (genAlg.pot) pot = genAlg.pot->clone();
+  }
+
+  GenAlg& GenAlg::operator=(const GenAlg& genAlg) {
+    maxIter = genAlg.maxIter;
+    popSize = genAlg.popSize;
+    numElites = genAlg.numElites;
+    selectionRate = genAlg.selectionRate;
+    mutationRate = genAlg.mutationRate;
+    pertubation = genAlg.pertubation;
+    bounds = genAlg.bounds;
+    iterFn = genAlg.iterFn;
+    pop = genAlg.pop;
+    if (genAlg.stateGen) stateGen = genAlg.stateGen;
+    if (genAlg.min) min = genAlg.min->clone();
+    if (genAlg.pot) pot = genAlg.pot->clone();
+    return *this;
+  }
+
 
   GenAlg& GenAlg::setMaxIter(int maxIter) {
     this->maxIter = maxIter;
