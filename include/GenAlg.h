@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <random>
+#include <limits>
 #include <functional>
 #include "minim/State.h"
 #include "minim/Minimiser.h"
@@ -17,6 +18,9 @@ namespace ellib {
     typedef State (*StateFn)();
 
     public:
+      std::vector<State> pop;
+      std::unique_ptr<Potential> pot;
+
       GenAlg(Potential& pot);
       GenAlg(const GenAlg& genAlg);
       GenAlg& operator=(const GenAlg& genAlg);
@@ -30,35 +34,52 @@ namespace ellib {
       void minimise();
       bool checkComplete();
 
-      GenAlg& setMaxIter(int maxIter);
-      GenAlg& setPopSize(int popSize);
-      GenAlg& setNumElites(int numElites);
-      GenAlg& setSelectionRate(double selectionRate);
-      GenAlg& setMutationRate(double mutationRate);
-      GenAlg& setStateGen(StateFn stateGen);
-      GenAlg& setBounds(Vector bound1, Vector bound2);
-      GenAlg& setPertubation(Vector pertubation);
-      GenAlg& setMinimiser(const std::string& min);
-      GenAlg& setMinimiser(std::unique_ptr<Minimiser> min);
-      GenAlg& setIterFn(std::function<void(std::vector<State>&)> iterFn);
 
+      // General GA parameters
       int maxIter = 100;
       int popSize = 100;
       int numElites = 1;
       double selectionRate = 0.3;
       double mutationRate = 0.1;
       Vector pertubation = Vector();
+
+      GenAlg& setMaxIter(int maxIter);
+      GenAlg& setPopSize(int popSize);
+      GenAlg& setNumElites(int numElites);
+      GenAlg& setSelectionRate(double selectionRate);
+      GenAlg& setMutationRate(double mutationRate);
+      GenAlg& setPertubation(Vector pertubation);
+
+      // Convergence parameters
+      int noImprovementConvergence = 0;
+      double energyConvergence = - std::numeric_limits<double>::infinity();
+
+      GenAlg& setConvergence(const std::string& method, double value);
+      GenAlg& setNoImprovementConvergence(int noImprovementConvergence);
+      GenAlg& setEnergyConvergence(double energyConvergence);
+
+      // Initialisation parameters
       Vector2d bounds = Vector2d();
       StateFn stateGen = nullptr;
+
+      GenAlg& setStateGen(StateFn stateGen);
+      GenAlg& setBounds(Vector bound1, Vector bound2);
+
+      // Other parameters
       std::unique_ptr<Minimiser> min = nullptr;
       std::function<void(std::vector<State>&)> iterFn;
 
-      std::vector<State> pop;
-      std::unique_ptr<Potential> pot;
+      GenAlg& setMinimiser(const std::string& min);
+      GenAlg& setMinimiser(std::unique_ptr<Minimiser> min);
+      GenAlg& setIterFn(std::function<void(std::vector<State>&)> iterFn);
 
     private:
+      int noImprovementIter;
+      double bestEnergy;
+      Vector popEnergies;
+
       Vector getEnergies();
-      std::vector<State> getBestStates(int n, Vector energies);
+      std::vector<State> getBestStates(int n);
 
       static thread_local std::mt19937 randEng;
       static float randF();

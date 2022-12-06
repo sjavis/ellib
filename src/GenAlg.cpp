@@ -20,15 +20,17 @@ namespace ellib {
   {}
 
   GenAlg::GenAlg(const GenAlg& genAlg)
-    : maxIter(genAlg.maxIter),
+    : pop(genAlg.pop),
+      maxIter(genAlg.maxIter),
       popSize(genAlg.popSize),
       numElites(genAlg.numElites),
       selectionRate(genAlg.selectionRate),
       mutationRate(genAlg.mutationRate),
       pertubation(genAlg.pertubation),
+      noImprovementConvergence(genAlg.noImprovementConvergence),
+      energyConvergence(genAlg.energyConvergence),
       bounds(genAlg.bounds),
-      iterFn(genAlg.iterFn),
-      pop(genAlg.pop)
+      iterFn(genAlg.iterFn)
   {
     if (genAlg.stateGen) stateGen = genAlg.stateGen;
     if (genAlg.min) min = genAlg.min->clone();
@@ -36,15 +38,17 @@ namespace ellib {
   }
 
   GenAlg& GenAlg::operator=(const GenAlg& genAlg) {
+    pop = genAlg.pop;
     maxIter = genAlg.maxIter;
     popSize = genAlg.popSize;
     numElites = genAlg.numElites;
     selectionRate = genAlg.selectionRate;
     mutationRate = genAlg.mutationRate;
     pertubation = genAlg.pertubation;
+    noImprovementConvergence = genAlg.noImprovementConvergence;
+    energyConvergence = genAlg.energyConvergence;
     bounds = genAlg.bounds;
     iterFn = genAlg.iterFn;
-    pop = genAlg.pop;
     if (genAlg.stateGen) stateGen = genAlg.stateGen;
     if (genAlg.min) min = genAlg.min->clone();
     if (genAlg.pot) pot = genAlg.pot->clone();
@@ -77,6 +81,11 @@ namespace ellib {
     return *this;
   }
 
+  GenAlg& GenAlg::setPertubation(Vector pertubation) {
+    this->pertubation = pertubation;
+    return *this;
+  }
+
   GenAlg& GenAlg::setStateGen(StateFn stateGen) {
     this->stateGen = stateGen;
     return *this;
@@ -93,8 +102,27 @@ namespace ellib {
     return *this;
   }
 
-  GenAlg& GenAlg::setPertubation(Vector pertubation) {
-    this->pertubation = pertubation;
+  GenAlg& GenAlg::setConvergence(const std::string& method, double value) {
+    std::string string = method;
+    std::transform(string.begin(), string.end(), string.begin(),
+                   [](unsigned char c){ return std::tolower(c); });
+    if (string == "noimprovement") {
+      noImprovementConvergence = (int) value;
+    } else if (string == "energy") {
+      energyConvergence = value;
+    } else {
+      throw std::invalid_argument("Invalid convergence method");
+    }
+    return *this;
+  }
+
+  GenAlg& GenAlg::setNoImprovementConvergence(int noImprovementConvergence) {
+    this->noImprovementConvergence = noImprovementConvergence;
+    return *this;
+  }
+
+  GenAlg& GenAlg::setEnergyConvergence(double energyConvergence) {
+    this->energyConvergence = energyConvergence;
     return *this;
   }
 
@@ -136,10 +164,11 @@ namespace ellib {
       }
       minimise();
       if (iterFn) iterFn(pop);
+      popEnergies = getEnergies();
       if (checkComplete()) break;
     }
 
-    auto bestState = getBestStates(1, getEnergies())[0];
+    auto bestState = getBestStates(1)[0];
     return bestState.coords();
   }
 
@@ -183,13 +212,18 @@ namespace ellib {
       }
       setPertubation(0.01*(bounds[1] - bounds[0]));
     }
+
+    // Initialise other private variables
+    noImprovementIter = 0;
+    bestEnergy = std::numeric_limits<double>::infinity();
+    popEnergies = getEnergies();
   }
 
 
   std::vector<State> GenAlg::select() {
     int nParents = selectionRate * popSize;
     nParents = std::max({nParents, numElites, 1});
-    return getBestStates(nParents, getEnergies());
+    return getBestStates(nParents);
   }
 
 
@@ -227,6 +261,17 @@ namespace ellib {
 
 
   bool GenAlg::checkComplete() {
+    // Calculate test parameters
+    double bestEnergyNew = *std::min_element(popEnergies.begin(), popEnergies.end());
+    if (bestEnergyNew < bestEnergy) {
+      bestEnergy = bestEnergyNew;
+      noImprovementIter = 0;
+    } else {
+      noImprovementIter ++;
+    }
+    // Get result
+    if (bestEnergy <= energyConvergence) return true;
+    if (noImprovementIter >= noImprovementConvergence) return true;
     return false;
   }
 
@@ -240,11 +285,11 @@ namespace ellib {
   }
 
 
-  std::vector<State> GenAlg::getBestStates(int n, Vector energies) {
+  std::vector<State> GenAlg::getBestStates(int n) {
     // Get the indicies of the lowest energy states
     std::vector<int> index(popSize);
     std::iota(index.begin(), index.end(), 0);
-    std::partial_sort(index.begin(), index.begin()+n, index.end(), [energies](int i, int j){ return energies[i]<energies[j]; });
+    std::partial_sort(index.begin(), index.begin()+n, index.end(), [this](int i, int j){ return popEnergies[i]<popEnergies[j]; });
     // Get the vector of the best states
     std::vector<State> best(n, pop[0]); // Assign pop[0] because State has no default initialiser
     for (int i=0; i<n; i++) {
