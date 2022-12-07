@@ -14,7 +14,7 @@ LDLIBS = $(addprefix -l, $(LIBS))
 LDFLAGS = $(addprefix -L, $(BUILD_DIR))
 LIB = $(patsubst %,$(BUILD_DIR)/lib%.a, $(LIBS))
 
-.PHONY: all clean cleantests gtest $(RUN_TESTS)
+.PHONY: all clean cleantests gtest $(RUN_TESTS) $(LIB)
 
 all: $(TESTS) $(RUN_TESTS) cleantests
 
@@ -25,7 +25,7 @@ cleantests:
 	rm -f $(TESTS) *_test.o
 
 $(LIB): $(BUILD_DIR)/lib%.a:
-	make -C .. $@
+	$(MAKE) --no-print-directory -C $(ROOT_DIR) $(@:$(ROOT_DIR)/%=%)
 
 $(RUN_TESTS): run_%: %
 	-mpirun -np 2 ./$<
