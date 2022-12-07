@@ -5,7 +5,7 @@ BUILD_DIR = bin
 LIB_DIR = lib
 LIBS = minim
 
-CXX      = mpic++#            C++ compiler
+CXX      = mpicxx#            C++ compiler
 CXXFLAGS = -Wall -DPARALLEL#  Flags for the C++ compiler
 
 TARGET := $(BUILD_DIR)/$(TARGET)
@@ -44,6 +44,5 @@ $(LIB): $(BUILD_DIR)/lib%.a:
 
 check:
 	@echo Testing...
-	@$(MAKE) --no-print-directory -C test clean
 	@$(MAKE) --no-print-directory -C test gtest
 	@$(MAKE) --no-print-directory -C test
