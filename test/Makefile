@@ -25,7 +25,7 @@ cleantests:
 	rm -f $(TESTS) *_test.o
 
 $(LIB): $(BUILD_DIR)/lib%.a:
-	$(MAKE) --no-print-directory -C $(ROOT_DIR) $(@:$(ROOT_DIR)/%=%)
+	$(MAKE) --no-print-directory -C $(ROOT_DIR) deps $(@:$(ROOT_DIR)/%=%)
 
 $(RUN_TESTS): run_%: %
 	-mpirun -np 2 ./$<

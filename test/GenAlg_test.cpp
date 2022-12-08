@@ -52,6 +52,37 @@ TEST(GenAlgTest, InitClass) {
 }
 
 
+TEST(GenAlgTest, Convergence) {
+  Lj3d pot;
+  auto ga = GenAlg(pot).setPopSize(5).setBounds({0,0,0}, {0,0,0});
+
+  // Check default values
+  EXPECT_EQ(ga.noImprovementConvergence, 0);
+  EXPECT_FLOAT_EQ(ga.energyConvergence, -std::numeric_limits<double>::infinity());
+
+  // Generic setter
+  ga.setConvergence("noImprovement", 5);
+  EXPECT_EQ(ga.noImprovementConvergence, 5);
+  ga.setConvergence("energy", -2);
+  EXPECT_FLOAT_EQ(ga.energyConvergence, -2);
+
+  // Specific setters
+  ga.setNoImprovementConvergence(3);
+  EXPECT_EQ(ga.noImprovementConvergence, 3);
+  ga.setEnergyConvergence(1.5);
+  EXPECT_FLOAT_EQ(ga.energyConvergence, 1.5);
+
+  // Check convergence function
+  ga.initialise();
+  ga.setConvergence("energy", -2).setConvergence("noImprovement", 2);
+  EXPECT_FALSE(ga.checkComplete());
+  EXPECT_FALSE(ga.checkComplete());
+  EXPECT_TRUE(ga.checkComplete());
+  ga.setConvergence("energy", 0).setConvergence("noImprovement", 10);
+  EXPECT_TRUE(ga.checkComplete());
+}
+
+
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   MPI_Init(&argc, &argv);

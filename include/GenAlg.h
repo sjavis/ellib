@@ -33,6 +33,8 @@ namespace ellib {
       void newGeneration(const std::vector<State>& parents);
       void minimise();
       bool checkComplete();
+      Vector getEnergies();
+      std::vector<State> getBestStates(int n);
 
 
       // General GA parameters
@@ -77,9 +79,6 @@ namespace ellib {
       int noImprovementIter;
       double bestEnergy;
       Vector popEnergies;
-
-      Vector getEnergies();
-      std::vector<State> getBestStates(int n);
 
       static thread_local std::mt19937 randEng;
       static float randF();

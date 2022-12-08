@@ -164,7 +164,7 @@ namespace ellib {
       }
       minimise();
       if (iterFn) iterFn(pop);
-      popEnergies = getEnergies();
+      getEnergies();
       if (checkComplete()) break;
     }
 
@@ -190,7 +190,7 @@ namespace ellib {
         pop[i] = pot->newState(coords);
       }
     } else {
-      std::logic_error("Either a state generator function or coordinate boundaries must be supplied");
+      throw std::logic_error("Either a state generator function or coordinate boundaries must be supplied");
     }
     
     // Assign pertubation size
@@ -216,7 +216,8 @@ namespace ellib {
     // Initialise other private variables
     noImprovementIter = 0;
     bestEnergy = std::numeric_limits<double>::infinity();
-    popEnergies = getEnergies();
+    popEnergies = Vector(popSize);
+    getEnergies();
   }
 
 
@@ -277,11 +278,10 @@ namespace ellib {
 
 
   Vector GenAlg::getEnergies() {
-    Vector energies(popSize);
     for (int i=0; i<popSize; i++) {
-      energies[i] = pop[i].energy();
+      popEnergies[i] = pop[i].energy();
     }
-    return energies;
+    return popEnergies;
   }
 
 
