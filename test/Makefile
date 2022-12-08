@@ -4,7 +4,7 @@ RUN_TESTS = $(addprefix run_, $(TESTS))
 ROOT_DIR = ..
 INC_DIR = $(ROOT_DIR)/include
 BUILD_DIR = $(ROOT_DIR)/bin
-LIBS = ellib minim
+LIBS = ellib
 
 CXX = mpicxx
 CXXFLAGS = -Wall -DPARALLEL
