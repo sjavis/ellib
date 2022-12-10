@@ -262,19 +262,18 @@ namespace ellib {
     for (int iPop=numElites; iPop<popSize; iPop++) {
       int i1 = randI(parents.size());
       int i2 = (randI(parents.size()-1) + i1+1) % parents.size(); // Ensure that i2 != i1
-      pop[iPop].comm.bcast(i1);
-      pop[iPop].comm.bcast(i2);
-      auto block = parents[i1].blockCoords();
-      auto block2 = parents[i2].blockCoords();
-      int nblock = pop[iPop].comm.nblock;
-      for (int iCoord=0; iCoord<nblock; iCoord++) {
+      mpi.bcast(i1);
+      mpi.bcast(i2);
+      auto coords = parents[i1].allCoords();
+      auto coords2 = parents[i2].allCoords();
+      int ndof = pop[iPop].ndof;
+      for (int iCoord=0; iCoord<ndof; iCoord++) {
         // Crossover
-        if (randF() < 0.5) block[iCoord] = block2[iCoord];
+        if (randF() < 0.5) coords[iCoord] = coords2[iCoord];
         // Mutation
-        if (randF() < mutationRate) block[iCoord] += pertubation[iCoord] * (2*randF()-1);
+        if (randF() < mutationRate) coords[iCoord] += pertubation[iCoord] * (2*randF()-1);
       }
-      pop[iPop].blockCoords(block);
-      pop[iPop].communicate();
+      pop[iPop].coords(coords);
     }
   }
 
@@ -299,7 +298,7 @@ namespace ellib {
     }
     // Get result
     if (bestEnergy <= energyConvergence) return true;
-    if (noImprovementIter >= noImprovementConvergence) return true;
+    if (noImprovementConvergence > 0 && noImprovementIter >= noImprovementConvergence) return true;
     return false;
   }
 

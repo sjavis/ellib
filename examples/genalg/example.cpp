@@ -9,7 +9,7 @@ void outputPop(std::vector<State>& pop) {
   std::ofstream file;
   if (mpi.rank==0) file = std::ofstream("output.txt", std::ios_base::app);
   for (auto s: pop) {
-    auto coords = s.coords();
+    auto coords = s.allCoords();
     if (mpi.rank == 0) {
       for (auto x: coords) {
         file << " " << x;
