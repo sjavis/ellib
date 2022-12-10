@@ -17,6 +17,7 @@ LIB = $(patsubst %,$(BUILD_DIR)/lib%.a, $(LIBS))
 .PHONY: all clean cleantests gtest $(RUN_TESTS) $(LIB)
 
 all: $(TESTS) $(RUN_TESTS) cleantests
+	@[ -f failed ] && rm failed && exit 1 || exit 0
 
 clean:
 	rm -f $(TESTS) gtest.a gtest_main.a *.o
@@ -28,7 +29,8 @@ $(LIB): $(BUILD_DIR)/lib%.a:
 	$(MAKE) --no-print-directory -C $(ROOT_DIR) deps $(@:$(ROOT_DIR)/%=%)
 
 $(RUN_TESTS): run_%: %
-	-mpirun -np 2 ./$<
+	@echo "Running $*"
+	@mpirun -np 2 ./$* || touch failed
 
 # Googletest rules and parameters, see:
 # https://github.com/google/googletest/blob/release-1.8.1/googletest/make/Makefile

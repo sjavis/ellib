@@ -8,6 +8,8 @@
 #include "minim/GradDescent.h"
 #include "minim/Anneal.h"
 #include "minim/utils/vec.h"
+#include "minim/utils/mpi.h"
+#include "minim/utils/print.h"
 
 namespace ellib {
 
@@ -173,26 +175,51 @@ namespace ellib {
   }
 
 
+  std::vector<std::vector<int>> getRanks(int popSize) {
+    std::vector<std::vector<int>> ranks(popSize);
+    if (popSize < mpi.size) {
+      // Multiple processors per state
+      int nBase = mpi.size / popSize;
+      int nRemainder = mpi.size - nBase*popSize;
+      int iProc = 0;
+      for (int i=0; i<popSize; i++) {
+        int nProc = (i<nRemainder) ? nBase+1 : nBase;
+        ranks[i] = std::vector<int>(nProc);
+        std::iota(ranks[i].begin(), ranks[i].end(), iProc);
+        iProc += nProc;
+      }
+    } else {
+      // Multiple states per processor
+      for (int i=0; i<popSize; i++) {
+        int iProc = (i * mpi.size) / popSize;
+        ranks[i] = {iProc};
+      }
+    }
+    return ranks;
+  }
+
+
   void GenAlg::initialise() {
     // Initialise states
+    auto ranks = getRanks(popSize);
     if (stateGen != nullptr) {
       pop = std::vector<State>(popSize, stateGen());
       for (int i=1; i<popSize; i++) {
         pop[i] = stateGen();
       }
     } else if (!bounds.empty()) {
-      State state1 = pot->newState( (bounds[1]+bounds[0])/2 );
+      State state1 = pot->newState((bounds[1]+bounds[0])/2, ranks[0]);
       pop = std::vector<State>(popSize, state1);
       int ndof = state1.ndof;
       for (int i=1; i<popSize; i++) {
         Vector coords = vec::random(ndof, 0.5) + 0.5;
         coords = coords * (bounds[1] - bounds[0]) + bounds[0];
-        pop[i] = pot->newState(coords);
+        pop[i] = pot->newState(coords, ranks[i]);
       }
     } else {
       throw std::logic_error("Either a state generator function or coordinate boundaries must be supplied");
     }
-    
+
     // Assign pertubation size
     if (pertubation.empty()) {
       if (bounds.empty()) {
@@ -280,6 +307,9 @@ namespace ellib {
   Vector GenAlg::getEnergies() {
     for (int i=0; i<popSize; i++) {
       popEnergies[i] = pop[i].energy();
+    }
+    for (int i=0; i<popSize; i++) {
+      mpi.bcast(popEnergies[i], pop[i].comm.ranks[0]);
     }
     return popEnergies;
   }
