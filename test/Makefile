@@ -1,27 +1,36 @@
-TESTS = Bitss_test
+TESTS = Bitss_test GenAlg_test
 RUN_TESTS = $(addprefix run_, $(TESTS))
 
 ROOT_DIR = ..
 INC_DIR = $(ROOT_DIR)/include
 BUILD_DIR = $(ROOT_DIR)/bin
-LIBS = ellib minim
+LIBS = ellib
 
-CXX = mpic++
+CXX = mpicxx
 CXXFLAGS = -Wall -DPARALLEL
 
 INC = $(addprefix -I, $(INC_DIR))
 LDLIBS = $(addprefix -l, $(LIBS))
 LDFLAGS = $(addprefix -L, $(BUILD_DIR))
+LIB = $(patsubst %,$(BUILD_DIR)/lib%.a, $(LIBS))
 
-.PHONY: all clean $(RUN_TESTS) gtest
+.PHONY: all clean cleantests gtest $(RUN_TESTS) $(LIB)
 
-all: $(TESTS) $(RUN_TESTS) clean
+all: $(TESTS) $(RUN_TESTS) cleantests
+	@[ -f failed ] && rm failed && exit 1 || exit 0
 
 clean:
 	rm -f $(TESTS) gtest.a gtest_main.a *.o
 
+cleantests:
+	rm -f $(TESTS) *_test.o
+
+$(LIB): $(BUILD_DIR)/lib%.a:
+	$(MAKE) --no-print-directory -C $(ROOT_DIR) deps $(@:$(ROOT_DIR)/%=%)
+
 $(RUN_TESTS): run_%: %
-	-mpirun -np 2 $<
+	@echo "Running $*"
+	@mpirun -np 2 ./$* || touch failed
 
 # Googletest rules and parameters, see:
 # https://github.com/google/googletest/blob/release-1.8.1/googletest/make/Makefile
@@ -48,11 +57,10 @@ gtest.a: gtest-all.o
 	$(AR) $(ARFLAGS) $@ $^
 
 gtest_main.a: gtest-all.o gtest_main.o
-	echo $(GTEST_HEADERS)
 	$(AR) $(ARFLAGS) $@ $^
 
 # Tests
-$(TESTS): %_test: %_test.o gtest.a
+$(TESTS): %_test: %_test.o gtest.a $(LIB)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ $(LDFLAGS) $(LDLIBS) -lpthread -o $@
 
 %_test.o: %_test.cpp $(GTEST_HEADERS)

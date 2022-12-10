@@ -5,7 +5,7 @@ BUILD_DIR = bin
 LIB_DIR = lib
 LIBS = minim
 
-CXX      = mpic++#            C++ compiler
+CXX      = mpicxx#            C++ compiler
 CXXFLAGS = -Wall -DPARALLEL#  Flags for the C++ compiler
 
 TARGET := $(BUILD_DIR)/$(TARGET)
@@ -17,33 +17,45 @@ LIB = $(patsubst %,$(BUILD_DIR)/lib%.a, $(LIBS))
 LDLIBS = $(addprefix -l, $(LIBS))
 LDFLAGS = $(addprefix -L, $(BUILD_DIR))
 
-.PHONY: all debug deps clean check $(LIB)
+.PHONY: all debug deps clean check $(LIBS)
 
-all: $(TARGET)
+all: deps $(TARGET)
 
 debug: CXXFLAGS += -g
 debug: SUBTARGET = debug
-debug: $(TARGET)
+debug: deps $(TARGET)
 
-deps: $(LIB)
+deps: $(LIBS)
 
 clean:
 	rm $(TARGET) $(OBJ) $(LIB)
 
-$(TARGET): $(OBJ)
-	ar -rcs $(TARGET) $(OBJ)
+$(TARGET): $(OBJ) $(LIB)
+	@echo "Making library: $@"
+	@ar -rcs $@ $(OBJ)
+	@echo "CREATE $@" >> tmp.mri
+	@echo "ADDLIB $@" >> tmp.mri
+	@for LIBFILE in $(LIB); do echo "ADDLIB $$LIBFILE" >> tmp.mri; done
+	@echo "SAVE" >> tmp.mri
+	@echo "END" >> tmp.mri
+	@ar -M < tmp.mri
+	@rm tmp.mri
 
 $(OBJ): $(BUILD_DIR)/%.o: %.cpp $(LIB)
 	$(CXX) $(CXXFLAGS) $(INC) -c $< $(LDFLAGS) $(LDLIBS) -o $@
 
-$(LIB): $(BUILD_DIR)/lib%.a:
+$(LIBS): %:
 	@git submodule update --init $(LIB_DIR)/$*
-	$(MAKE) -C $(LIB_DIR)/$* $(SUBTARGET)
+	$(MAKE) --no-print-directory -C $(LIB_DIR)/$* $(SUBTARGET)
 	@ln -sfn ../$(LIB_DIR)/$*/$(INC_DIR) $(INC_DIR)/$*
-	@cp $(LIB_DIR)/$*/$@ $@
+	@if [ ! -f $(BUILD_DIR)/lib$*.a ] || [ $(LIB_DIR)/$*/$(BUILD_DIR)/lib$*.a -nt $(BUILD_DIR)/lib$*.a ]; then\
+	  cp $(LIB_DIR)/$*/$(BUILD_DIR)/lib$*.a $(BUILD_DIR)/lib$*.a;\
+	fi
+
+$(LIB): $(BUILD_DIR)/lib%.a:
+	$(MAKE) --no-print-directory $*
 
 check:
 	@echo Testing...
-	@$(MAKE) --no-print-directory -C test clean
 	@$(MAKE) --no-print-directory -C test gtest
 	@$(MAKE) --no-print-directory -C test
