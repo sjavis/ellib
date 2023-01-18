@@ -1,14 +1,16 @@
 #include "ellib.h"
 
+using namespace ellib;
+
 int main(int argc, char** argv) {
-  ellib::mpiInit(&argc, &argv);
-        
-  ellib::Lj3d pot;
-  ellib::State s1 = pot.newState({0,0,0});
-  ellib::State s2 = pot.newState({0,0,0});
-  ellib::Bitss bitss(s1, s2);
-  ellib::State result = bitss.run();
-  ellib::print(result.coords());
+  mpiInit(&argc, &argv);
+
+  Lj3d pot;
+  State s1(pot, {0,0,0});
+  State s2(pot, {0,0,0});
+  Bitss bitss(s1, s2);
+  State result = bitss.run();
+  print(result.coords());
 
   return 0;
 }

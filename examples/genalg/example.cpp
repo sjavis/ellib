@@ -35,7 +35,9 @@ int main(int argc, char** argv) {
   auto eFunc = [](const Vector& x){ return x[0]*x[0] + x[1]*x[1]; };
   auto gFunc = [](const Vector& x){ return Vector{2*x[0], 2*x[1]}; };
   Potential pot(eFunc, gFunc);
+
   GenAlg ga = GenAlg(pot).setBounds({-1,-1}, {2,2}).setMaxIter(10).setIterFn(outputPop);
+  ga.setMinimiser("lbfgs");
   auto result = ga.run();
   print(result);
 
