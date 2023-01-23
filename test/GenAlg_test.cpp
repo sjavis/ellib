@@ -4,6 +4,7 @@
 #include "gtest-mpi-listener.hpp"
 #include "ArraysMatch.h"
 #include "minim/utils/mpi.h"
+#include "minim/utils/print.h"
 
 #include "minim/Lj3d.h"
 #include "minim/Lbfgs.h"
@@ -37,9 +38,9 @@ TEST(GenAlgTest, InitClass) {
   EXPECT_FLOAT_EQ(ga.selectionRate, 0.5);
   EXPECT_FLOAT_EQ(ga.mutationRate, 0.5);
 
-  auto stateGen = []() -> State { Lj3d pot; return State(pot, {0}); };
+  auto stateGen = []() -> State { Lj3d pot; return State(pot, {0,0,0}); };
   ga.setStateGen(stateGen);
-  EXPECT_TRUE(ArraysNear(ga.stateGen().coords(), {0}, 1e-6));
+  EXPECT_TRUE(ArraysNear(ga.stateGen().coords(), {0,0,0}, 1e-6));
 
   ga.setBounds({0,0,0}, {1,1,1});
   EXPECT_EQ(ga.bounds.size(), 2);
