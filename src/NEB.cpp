@@ -31,7 +31,7 @@ namespace ellib {
   }
 
 
-  NEB::NEB(Potential pot, vector<vector<double>> coordList, bool dneb) 
+  NEB::NEB(Potential pot, vector<vector<double>> coordList, bool dneb, int hybrid)
     : nImage(coordList.size()), state(State(pot, coordList[0])) // TODO: Add default State constructor so this is not needed
   {
     auto ranks = getRanks(nImage);
@@ -41,12 +41,12 @@ namespace ellib {
       allCoords.insert(allCoords.end(), coordList[i].begin(), coordList[i].end());
       chain.push_back(State(pot, coordList[i], ranks[i]));
     }
-    this->state = State(NEBPotential(chain, dneb), allCoords);
+    this->state = State(NEBPotential(chain, dneb, hybrid), allCoords);
     this->minimiser = std::unique_ptr<Minimiser>(new Lbfgs);
   }
 
-  NEB::NEB(Potential pot, vector<double> coords1, vector<double> coords2, int nImage, bool dneb)
-    : NEB(pot, interpolate(coords1, coords2, nImage), dneb)
+  NEB::NEB(Potential pot, vector<double> coords1, vector<double> coords2, int nImage, bool dneb, int hybrid)
+    : NEB(pot, interpolate(coords1, coords2, nImage), dneb, hybrid)
   {}
 
 
@@ -81,6 +81,19 @@ namespace ellib {
       xStart = xEnd;
     }
 
+    // Get single state energies + gradients
+    for (int iState=1; iState<nImage-1; iState++) {
+      if (chain[iState].usesThisProc) {
+        chain[iState].energyGradient(xList[iState], (e)?&eList[iState]:nullptr, (g)?&gList[iState]:nullptr);
+      }
+    }
+    // Using a second loop allows the states to first be evaluated without blocking
+    for (int iState=1; iState<nImage-1; iState++) {
+      int root = chain[iState].comm.ranks[0];
+      if (e) mpi.bcast(eList[iState], root);
+      if (g) mpi.bcast(gList[iState], root);
+    }
+
     // Get differences
     vector<vector<double>> xDiffs(nImage-1);
     vector<double> xDiffMags(nImage-1);
@@ -98,17 +111,20 @@ namespace ellib {
       tau[iState] = tau[iState] / vec::norm(tau[iState]);
     }
 
-    // Get single state energies + gradients (perpendicular to tau)
-    for (int iState=1; iState<nImage-1; iState++) {
-      if (chain[iState].usesThisProc) {
-        chain[iState].energyGradient(xList[iState], (e)?&eList[iState]:nullptr, (g)?&gList[iState]:nullptr);
+    // Hybrid method
+    int iMaxState;
+    if (hybrid) {
+      // Get highest energy state
+      iMaxState = 1;
+      double eMax = eList[1];
+      for (int iState=2; iState<nImage-1; iState++) {
+        if (eList[iState] > eMax) {
+          iMaxState = iState;
+          eMax = eList[iState];
+        }
       }
-    }
-    // Using a second loop allows the states to first be evaluated without blocking
-    for (int iState=1; iState<nImage-1; iState++) {
-      int root = chain[iState].comm.ranks[0];
-      if (e) mpi.bcast(eList[iState], root);
-      if (g) mpi.bcast(gList[iState], root);
+      // Climbing image
+      if (hybrid==1) gList[iMaxState] -= 2 * vec::dotProduct(gList[iMaxState], tau[iMaxState]) * tau[iMaxState];
     }
 
     // Total energy
@@ -123,6 +139,7 @@ namespace ellib {
     // Total gradient
     if (!g) return;
     for (int iState=1; iState<nImage-1; iState++) {
+      if (hybrid && iState==iMaxState) continue;
       // Spring gradient
       vector<double> gS = kSpring * (xDiffMags[iState-1] - xDiffMags[iState]) * tau[iState];
       // Parallel and perpendicular components
