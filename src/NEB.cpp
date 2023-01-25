@@ -7,44 +7,65 @@ using std::vector;
 
 namespace ellib {
 
-  NEB::NEB(const State& state1, const State& state2, int nImage, bool dneb)
-    : NEB(interpolate(state1, state2, nImage), dneb)
-  {}
-
-  NEB::NEB(const vector<State>& chain, bool dneb) {
-    auto pot = NEBPotential(chain, dneb);
-    vector<double> coords;
-    for (auto& state: chain) {
-      auto x = state.coords();
-      coords.insert(coords.end(), x.begin(), x.end());
+  std::vector<std::vector<int>> getRanks(int nImage) {
+    std::vector<std::vector<int>> ranks(nImage);
+    if (nImage < mpi.size) {
+      // Multiple processors per state
+      int nBase = mpi.size / nImage;
+      int nRemainder = mpi.size - nBase*nImage;
+      int iProc = 0;
+      for (int i=0; i<nImage; i++) {
+        int nProc = (i<nRemainder) ? nBase+1 : nBase;
+        ranks[i] = std::vector<int>(nProc);
+        std::iota(ranks[i].begin(), ranks[i].end(), iProc);
+        iProc += nProc;
+      }
+    } else {
+      // Multiple states per processor
+      for (int i=0; i<nImage; i++) {
+        int iProc = (i * mpi.size) / nImage;
+        ranks[i] = {iProc};
+      }
     }
-    this->state = State(pot, coords);
-    this->minimiser = std::unique_ptr<Minimiser>(new Lbfgs);
+    return ranks;
   }
 
 
-  vector<State> NEB::interpolate(const State& state1, const State& state2, int nImage) {
-    auto x1 = state1.coords();
-    auto x2 = state2.coords();
-    vector<State> chain(nImage);
-    for (int i=1; i<nImage-1; i++) {
-      double t = (double)i / nImage;
-      auto x = (1-t)*x1 + t*x2;
-      chain[i] = State(*state1.pot, x);
+  NEB::NEB(Potential pot, vector<vector<double>> coordList, bool dneb) 
+    : nImage(coordList.size()), state(State(pot, coordList[0])) // TODO: Add default State constructor so this is not needed
+  {
+    auto ranks = getRanks(nImage);
+    vector<double> allCoords;
+    vector<State> chain;
+    for (int i=0; i<nImage; i++) {
+      allCoords.insert(allCoords.end(), coordList[i].begin(), coordList[i].end());
+      chain.push_back(State(pot, coordList[i], ranks[i]));
+    }
+    this->state = State(NEBPotential(chain, dneb), allCoords);
+    this->minimiser = std::unique_ptr<Minimiser>(new Lbfgs);
+  }
+
+  NEB::NEB(Potential pot, vector<double> coords1, vector<double> coords2, int nImage, bool dneb)
+    : NEB(pot, interpolate(coords1, coords2, nImage), dneb)
+  {}
+
+
+  std::vector<std::vector<double>> NEB::interpolate(vector<double> coords1, vector<double> coords2, int nImage) {
+    vector<vector<double>> chain(nImage);
+    for (int i=0; i<nImage; i++) {
+      double t = i / (nImage - 1.0);
+      chain[i] = (1-t)*coords1 + t*coords2;
     }
     return chain;
   }
 
 
-  State NEB::run() {
+  vector<State> NEB::run() {
     minimiser->minimise(state);
-    return state;
+    auto nebPot = dynamic_cast<NEBPotential&>(*state.pot);
+    nebPot.setChainCoords(state.coords());
+    return nebPot.chain;
   }
-
-
-  NEB::NEBPotential::NEBPotential(vector<State> chain, bool dneb)
-    : dneb(dneb), chain(chain)
-  {}
 
   void NEB::NEBPotential::energyGradient(const vector<double> &coords, double* e, vector<double>* g) const {
     int nImage = chain.size();
@@ -71,7 +92,7 @@ namespace ellib {
     // Get tangent vectors using bisection method (J Chem Phys 113, 9978 (2000))
     vector<vector<double>> tau(nImage);
     tau[0] = xDiffs[0] / xDiffMags[0];
-    tau[nImage] = xDiffs[nImage-1] / xDiffMags[nImage-1];
+    tau[nImage-1] = xDiffs[nImage-2] / xDiffMags[nImage-2];
     for (int iState=1; iState<nImage-1; iState++) {
       tau[iState] = xDiffs[iState-1] / xDiffMags[iState-1] +  xDiffs[iState] / xDiffMags[iState];
       tau[iState] = tau[iState] / vec::norm(tau[iState]);
@@ -115,9 +136,23 @@ namespace ellib {
         gList[iState] = gPerp + gSPara;
       }
     }
+    gList[0] = vector<double>(chain[0].ndof);
+    gList[nImage-1] = vector<double>(chain[nImage-1].ndof);
+    (*g).clear();
     (*g).reserve(coords.size());
     for (auto& gImage: gList) {
       (*g).insert(g->end(), gImage.begin(), gImage.end());
+    }
+  }
+
+
+  // Split coords among each state
+  void NEB::NEBPotential::setChainCoords(const std::vector<double>& coords) {
+    auto xStart = coords.begin();
+    for (auto& state: chain) {
+      auto xEnd = xStart + state.ndof;
+      if (state.usesThisProc) state.coords(vector<double>(xStart, xEnd));
+      xStart = xEnd;
     }
   }
 

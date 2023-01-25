@@ -12,13 +12,14 @@ namespace ellib {
 
   class NEB {
     public:
+      int nImage;
       State state;
       std::unique_ptr<Minimiser> minimiser;
 
-      NEB(const State& state1, const State& state2, int nImage, bool dneb=false);
-      NEB(const std::vector<State>& chain, bool dneb=false);
-      std::vector<State> interpolate(const State& state1, const State& state2, int nImage);
-      State run();
+      NEB(Potential pot, std::vector<std::vector<double>> coordList, bool dneb=false);
+      NEB(Potential pot, std::vector<double> coords1, std::vector<double> coords2, int nImage, bool dneb=false);
+      std::vector<std::vector<double>> interpolate(std::vector<double> coords1, std::vector<double> coords2, int nImage);
+      std::vector<State> run();
 
       class NEBPotential : public NewPotential<NEBPotential> {
         public:
@@ -27,8 +28,9 @@ namespace ellib {
           int hybrid = 0;
           std::vector<State> chain;
 
-          NEBPotential(std::vector<State> chain, bool dneb);
-          void energyGradient(const std::vector<double> &coords, double* e, std::vector<double>* g) const override;
+          NEBPotential(std::vector<State> chain, bool dneb) : dneb(dneb), chain(chain) { _energyGradientDef = true; };
+          void energyGradient(const std::vector<double>& coords, double* e, std::vector<double>* g) const override;
+          void setChainCoords(const std::vector<double>& coords);
       };
   };
 
