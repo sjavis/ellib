@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
 
   std::ofstream file("path.txt");
   for (auto state: chain) {
-    for (double x: state.allCoords()) {
+    for (double x: state) {
       file << " " << x;
     }
     file << std::endl;

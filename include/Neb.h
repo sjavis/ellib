@@ -21,7 +21,11 @@ namespace ellib {
       Neb(Potential pot, std::vector<std::vector<double>> coordList, bool dneb=false);
       Neb(Potential pot, std::vector<double> coords1, std::vector<double> coords2, int nImage, bool dneb=false);
       Neb& setHybrid(int method, int onIter);
-      std::vector<State> run();
+
+      std::vector<std::vector<double>> run();
+      std::vector<State> getChain();
+      std::vector<double> getEnergies();
+      std::vector<std::vector<double>> getCoords();
 
       class NebPotential : public NewPotential<NebPotential> {
         public:
@@ -32,7 +36,7 @@ namespace ellib {
 
           NebPotential(std::vector<State> chain, bool dneb) : dneb(dneb), chain(chain) { _energyGradientDef = true; };
           void energyGradient(const std::vector<double>& coords, double* e, std::vector<double>* g) const override;
-          void setChainCoords(const std::vector<double>& coords);
+          std::vector<std::vector<double>> setChainCoords(const std::vector<double>& coords);
       };
   };
 

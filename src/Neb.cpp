@@ -70,7 +70,7 @@ namespace ellib {
   }
 
 
-  vector<State> Neb::run() {
+  vector<vector<double>> Neb::run() {
     auto startHybrid = [this](int iter, State& state) {
       if (hybrid && iter==hybridIter) dynamic_cast<NebPotential&>(*state.pot).hybrid = hybrid;
     };
@@ -78,8 +78,32 @@ namespace ellib {
     minimiser->minimise(state, startHybrid);
 
     auto nebPot = dynamic_cast<NebPotential&>(*state.pot);
-    nebPot.setChainCoords(state.coords());
-    return nebPot.chain;
+    return nebPot.setChainCoords(state.coords());
+  }
+
+
+  std::vector<State> Neb::getChain() {
+    return dynamic_cast<NebPotential&>(*state.pot).chain;
+  }
+
+
+  std::vector<double> Neb::getEnergies() {
+    vector<double> energies;
+    energies.reserve(nImage);
+    for (auto& state: getChain()) {
+      energies.push_back(state.allEnergy());
+    }
+    return energies;
+  }
+
+
+  vector<vector<double>> Neb::getCoords() {
+    vector<vector<double>> coords;
+    coords.reserve(nImage);
+    for (auto& state: getChain()) {
+      coords.push_back(state.allCoords());
+    }
+    return coords;
   }
 
 
@@ -184,13 +208,17 @@ namespace ellib {
 
 
   // Split coords among each state
-  void Neb::NebPotential::setChainCoords(const std::vector<double>& coords) {
+  vector<vector<double>> Neb::NebPotential::setChainCoords(const std::vector<double>& coords) {
+    int nImage = chain.size();
+    vector<vector<double>> xList(nImage);
     auto xStart = coords.begin();
-    for (auto& state: chain) {
-      auto xEnd = xStart + state.ndof;
-      if (state.usesThisProc) state.coords(vector<double>(xStart, xEnd));
+    for (int iState=0; iState<nImage; iState++) {
+      auto xEnd = xStart + chain[iState].ndof;
+      xList[iState] = vector<double>(xStart, xEnd);
+      if (chain[iState].usesThisProc) chain[iState].coords(xList[iState]);
       xStart = xEnd;
     }
+    return xList;
   }
 
 }
