@@ -36,5 +36,14 @@ namespace ellib {
       };
   };
 
+
+  class Dneb : public Neb {
+    public:
+      Dneb(Potential pot, std::vector<std::vector<double>> coordList)
+        : Neb(pot, coordList, true) {};
+      Dneb(Potential pot, std::vector<double> coords1, std::vector<double> coords2, int nImage)
+        : Neb(pot, coords1, coords2, nImage, true) {};
+  };
+
 }
 #endif
