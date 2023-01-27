@@ -34,7 +34,7 @@ namespace ellib {
       Bitss(const State& state1, const State& state2, std::unique_ptr<Minimiser> minimiser);
       ~Bitss() {};
 
-      State run();
+      Vector run();
 
       Bitss& setMaxIter(int maxIter);
       Bitss& setDistStep(double distStep);

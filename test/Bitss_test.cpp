@@ -243,9 +243,8 @@ TEST(BitssTest, Toy2d) {
   State s1 = pot.newState({-1, 1});
   State s2 = pot.newState({1, 0});
   Bitss bitss(s1, s2);
-  Vector result = bitss.run().coords();
-  Vector mid = {(result[0]+result[2])/2, (result[1]+result[3])/2};
-  EXPECT_LT(vec::norm(mid), 1e-6);
+  Vector ts = bitss.run();
+  EXPECT_LT(vec::norm(ts), 1e-6);
 }
 
 

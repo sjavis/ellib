@@ -9,8 +9,8 @@ int main(int argc, char** argv) {
   State s1(pot, {0,0,0});
   State s2(pot, {0,0,0});
   Bitss bitss(s1, s2);
-  State result = bitss.run();
-  print(result.coords());
+  auto ts = bitss.run();
+  print(ts);
 
   return 0;
 }

@@ -98,7 +98,7 @@ namespace ellib {
   }
 
 
-  State Bitss::run() {
+  Vector Bitss::run() {
     _pot->d0 = _pot->dist(_pot->state1.coords(), _pot->state2.coords());
     _pot->di = _pot->d0;
     for (_iter=0; _iter<maxIter; _iter++) {
@@ -106,7 +106,7 @@ namespace ellib {
       minimiser->minimise(state, &adjustState);
       if (checkConvergence()) break;
     }
-    return state;
+    return getTSCoords();
   }
 
 
