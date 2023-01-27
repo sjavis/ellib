@@ -110,6 +110,33 @@ namespace ellib {
   }
 
 
+  State Bitss::getTS() {
+    auto bitssPot = static_cast<BitssPotential&>(*state.pot);
+    auto pot = *(bitssPot.state1.pot);
+    return State(pot, getTSCoords());
+  }
+
+
+  Vector Bitss::getTSCoords() {
+    auto bitssPot = static_cast<BitssPotential&>(*state.pot);
+    auto coords1 = bitssPot.state1.coords();
+    auto coords2 = bitssPot.state2.coords();
+    return interp(coords1, coords2, 0.5);
+  }
+
+
+  std::vector<State> Bitss::getPair() {
+    auto bitssPot = static_cast<BitssPotential&>(*state.pot);
+    return {bitssPot.state1, bitssPot.state2};
+  }
+
+
+  std::vector<Vector> Bitss::getPairCoords() {
+    auto pair = getPair();
+    return {pair[0].coords(), pair[1].coords()};
+  }
+
+
   void Bitss::adjustState(int iter, State& state) {
     auto pot = static_cast<BitssPotential*>(state.pot.get());
     // Update the coordinates for the individual states

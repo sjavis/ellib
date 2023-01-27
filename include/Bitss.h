@@ -47,6 +47,11 @@ namespace ellib {
       Bitss& setEScaleMax(double eScaleMax);
       Bitss& setDistFunc(DFunc dist, DGFunc distGrad);
 
+      State getTS();
+      Vector getTSCoords();
+      std::vector<State> getPair();
+      std::vector<Vector> getPairCoords();
+
       int iter() { return _iter; };
 
     private:
