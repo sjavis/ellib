@@ -1,4 +1,4 @@
-#include "NEB.h"
+#include "Neb.h"
 #include "minim/Lbfgs.h"
 #include "minim/utils/vec.h"
 #include "minim/utils/mpi.h"
@@ -44,7 +44,7 @@ namespace ellib {
   //=====//
   // NEB //
   //=====//
-  NEB::NEB(Potential pot, vector<vector<double>> coordList, bool dneb)
+  Neb::Neb(Potential pot, vector<vector<double>> coordList, bool dneb)
     : nImage(coordList.size()), state(State(pot, coordList[0])) // TODO: Add default State constructor so this is not needed
   {
     auto ranks = getRanks(nImage);
@@ -54,30 +54,30 @@ namespace ellib {
       allCoords.insert(allCoords.end(), coordList[i].begin(), coordList[i].end());
       chain.push_back(State(pot, coordList[i], ranks[i]));
     }
-    this->state = State(NEBPotential(chain, dneb), allCoords);
+    this->state = State(NebPotential(chain, dneb), allCoords);
     this->minimiser = std::unique_ptr<Minimiser>(new Lbfgs);
   }
 
-  NEB::NEB(Potential pot, vector<double> coords1, vector<double> coords2, int nImage, bool dneb)
-    : NEB(pot, interpolate(coords1, coords2, nImage), dneb)
+  Neb::Neb(Potential pot, vector<double> coords1, vector<double> coords2, int nImage, bool dneb)
+    : Neb(pot, interpolate(coords1, coords2, nImage), dneb)
   {}
 
 
-  NEB& NEB::setHybrid(int method, int onIter) {
+  Neb& Neb::setHybrid(int method, int onIter) {
     hybrid = method;
     hybridIter = onIter;
     return *this;
   }
 
 
-  vector<State> NEB::run() {
+  vector<State> Neb::run() {
     auto startHybrid = [this](int iter, State& state) {
-      if (hybrid && iter==hybridIter) dynamic_cast<NEBPotential&>(*state.pot).hybrid = hybrid;
+      if (hybrid && iter==hybridIter) dynamic_cast<NebPotential&>(*state.pot).hybrid = hybrid;
     };
 
     minimiser->minimise(state, startHybrid);
 
-    auto nebPot = dynamic_cast<NEBPotential&>(*state.pot);
+    auto nebPot = dynamic_cast<NebPotential&>(*state.pot);
     nebPot.setChainCoords(state.coords());
     return nebPot.chain;
   }
@@ -86,7 +86,7 @@ namespace ellib {
   //===============//
   // NEB Potential //
   //===============//
-  void NEB::NEBPotential::energyGradient(const vector<double> &coords, double* e, vector<double>* g) const {
+  void Neb::NebPotential::energyGradient(const vector<double> &coords, double* e, vector<double>* g) const {
     int nImage = chain.size();
     vector<double> eList(nImage);
     vector<vector<double>> gList(nImage);
@@ -184,7 +184,7 @@ namespace ellib {
 
 
   // Split coords among each state
-  void NEB::NEBPotential::setChainCoords(const std::vector<double>& coords) {
+  void Neb::NebPotential::setChainCoords(const std::vector<double>& coords) {
     auto xStart = coords.begin();
     for (auto& state: chain) {
       auto xEnd = xStart + state.ndof;

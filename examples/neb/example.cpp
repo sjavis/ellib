@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
   auto min1 = min.minimise(state1);
   auto min2 = min.minimise(state2);
 
-  NEB neb(Potential(pathwayEG), min1, min2, 5);
+  Neb neb(Potential(pathwayEG), min1, min2, 5);
   neb.setHybrid(1, 100);
   auto chain = neb.run();
 
