@@ -11,6 +11,7 @@
 
 #include "minim/utils/vec.h"
 #include "minim/utils/mpi.h"
+#include "minim/utils/print.h"
 
 namespace ellib {
 
@@ -96,6 +97,11 @@ namespace ellib {
     _pot->distGrad = distGrad;
     return *this;
   }
+ 
+  Bitss& Bitss::setLog(bool log) {
+    this->log = log;
+    return *this;
+  }
 
 
   Vector Bitss::run() {
@@ -104,6 +110,12 @@ namespace ellib {
     for (_iter=0; _iter<maxIter; _iter++) {
       _pot->di = _pot->di * (1 - distStep);
       minimiser->minimise(state, &adjustState);
+      if (log) {
+        double e1 = _pot->state1.energy();
+        double e2 = _pot->state2.energy();
+        double d = _pot->dist(_pot->state1.coords(), _pot->state2.coords());
+        print("BITSS \tI:", _iter, "\tE:", e1, e2, "\tD:", d, "ERR:", d/_pot->di-1);
+      }
       if (checkConvergence()) break;
     }
     return getTSCoords();

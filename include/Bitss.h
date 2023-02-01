@@ -26,6 +26,7 @@ namespace ellib {
       double eScaleMax = 0;
       double convergenceDist = 0.01;
       std::string convergenceMethod = "relative distance"; //!< Method to determine convergence. Possible values: distance, relative distance, midpoint gradient, midpoint change
+      bool log = false;
 
       State state;
       std::unique_ptr<Minimiser> minimiser;
@@ -46,6 +47,7 @@ namespace ellib {
       Bitss& setBeta(double beta);
       Bitss& setEScaleMax(double eScaleMax);
       Bitss& setDistFunc(DFunc dist, DGFunc distGrad);
+      Bitss& setLog(bool log=true);
 
       State getTS();
       Vector getTSCoords();
@@ -64,7 +66,7 @@ namespace ellib {
       static void recomputeCoefficients(State& state); // TODO: should this not be static
       static Vector interp(const Vector& coords1, const Vector& coords2, double t);
       bool checkConvergence();
-      
+
 
     public:
       class BitssPotential : public NewPotential<BitssPotential> {
