@@ -53,6 +53,8 @@ namespace ellib {
       Vector getTSCoords();
       std::vector<State> getPair();
       std::vector<Vector> getPairCoords();
+      Bitss& setCoords(const Vector& coords);
+      Bitss& setCoords(const Vector& coords1, const Vector& coords2);
 
       int iter() { return _iter; };
 

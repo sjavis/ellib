@@ -147,6 +147,26 @@ namespace ellib {
     auto pair = getPair();
     return {pair[0].coords(), pair[1].coords()};
   }
+ 
+
+  Bitss& Bitss::setCoords(const Vector& coords) {
+    auto pot = static_cast<BitssPotential*>(state.pot.get());
+    state.coords(coords);
+    auto coordsMid = coords.begin() + pot->state1.ndof;
+    pot->state1.coords(Vector(coords.begin(), coordsMid));
+    pot->state2.coords(Vector(coordsMid, coords.end()));
+    return *this;
+  }
+ 
+  Bitss& Bitss::setCoords(const Vector& coords1, const Vector& coords2) {
+    auto pot = static_cast<BitssPotential*>(state.pot.get());
+    Vector allCoords = coords1;
+    allCoords.insert(allCoords.end(), coords2.begin(), coords2.end());
+    state.coords(allCoords);
+    pot->state1.coords(coords1);
+    pot->state2.coords(coords2);
+    return *this;
+  }
 
 
   void Bitss::adjustState(int iter, State& state) {
