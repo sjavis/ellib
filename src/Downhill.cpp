@@ -47,6 +47,7 @@ namespace ellib {
 
     minimiser->minimise(tsPair[0], trackPath);
     std::reverse(mep.begin(), mep.end());
+    std::reverse(mepEnergy.begin(), mepEnergy.end());
     minimiser->minimise(tsPair[1], trackPath);
     return mep;
   }
