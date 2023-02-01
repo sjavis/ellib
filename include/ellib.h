@@ -8,6 +8,7 @@
 #include "Bitss.h"
 #include "GenAlg.h"
 #include "Neb.h"
+#include "Downhill.h"
 #include "minim/minim.h"
 
 namespace ellib {
