@@ -44,7 +44,7 @@ namespace ellib {
   //=====//
   // NEB //
   //=====//
-  Neb::Neb(Potential pot, vector<vector<double>> coordList, bool dneb)
+  Neb::Neb(const Potential& pot, vector<vector<double>> coordList, bool dneb)
     : nImage(coordList.size()), state(State(pot, coordList[0])) // TODO: Add default State constructor so this is not needed
   {
     auto ranks = getRanks(nImage);
@@ -58,7 +58,7 @@ namespace ellib {
     this->minimiser = std::unique_ptr<Minimiser>(new Lbfgs);
   }
 
-  Neb::Neb(Potential pot, vector<double> coords1, vector<double> coords2, int nImage, bool dneb)
+  Neb::Neb(const Potential& pot, vector<double> coords1, vector<double> coords2, int nImage, bool dneb)
     : Neb(pot, interpolate(coords1, coords2, nImage), dneb)
   {}
 

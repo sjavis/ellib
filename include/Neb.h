@@ -18,8 +18,8 @@ namespace ellib {
       State state;
       std::unique_ptr<Minimiser> minimiser;
 
-      Neb(Potential pot, std::vector<std::vector<double>> coordList, bool dneb=false);
-      Neb(Potential pot, std::vector<double> coords1, std::vector<double> coords2, int nImage, bool dneb=false);
+      Neb(const Potential& pot, std::vector<std::vector<double>> coordList, bool dneb=false);
+      Neb(const Potential& pot, std::vector<double> coords1, std::vector<double> coords2, int nImage, bool dneb=false);
       Neb& setHybrid(int method, int onIter);
 
       std::vector<std::vector<double>> run();
@@ -43,9 +43,9 @@ namespace ellib {
 
   class Dneb : public Neb {
     public:
-      Dneb(Potential pot, std::vector<std::vector<double>> coordList)
+      Dneb(const Potential& pot, std::vector<std::vector<double>> coordList)
         : Neb(pot, coordList, true) {};
-      Dneb(Potential pot, std::vector<double> coords1, std::vector<double> coords2, int nImage)
+      Dneb(const Potential& pot, std::vector<double> coords1, std::vector<double> coords2, int nImage)
         : Neb(pot, coords1, coords2, nImage, true) {};
   };
 
