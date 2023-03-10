@@ -39,8 +39,8 @@ namespace ellib {
     }
   }
 
-  Bitss::Bitss(const State& state1, const State& state2, std::unique_ptr<Minimiser> minimiser)
-    : state(BitssPotential::newState(state1, state2)), minimiser(std::move(minimiser))
+  Bitss::Bitss(const State& state1, const State& state2, const Minimiser& minimiser)
+    : state(BitssPotential::newState(state1, state2)), minimiser(minimiser.clone())
   {
     _pot = static_cast<BitssPotential*>(state.pot.get());
   }

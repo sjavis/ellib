@@ -32,7 +32,7 @@ namespace ellib {
       std::unique_ptr<Minimiser> minimiser;
 
       Bitss(const State& state1, const State& state2, const std::string& minimiser="Lbfgs");
-      Bitss(const State& state1, const State& state2, std::unique_ptr<Minimiser> minimiser);
+      Bitss(const State& state1, const State& state2, const Minimiser& minimiser);
       ~Bitss() {};
 
       Vector run();

@@ -146,8 +146,8 @@ namespace ellib {
     return *this;
   }
 
-  GenAlg& GenAlg::setMinimiser(std::unique_ptr<Minimiser> min) {
-    this->min = std::move(min);
+  GenAlg& GenAlg::setMinimiser(const Minimiser& min) {
+    this->min = min.clone();
     return *this;
   }
 

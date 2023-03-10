@@ -72,7 +72,7 @@ namespace ellib {
       std::function<void(std::vector<State>&)> iterFn;
 
       GenAlg& setMinimiser(const std::string& min);
-      GenAlg& setMinimiser(std::unique_ptr<Minimiser> min);
+      GenAlg& setMinimiser(const Minimiser& min);
       GenAlg& setIterFn(std::function<void(std::vector<State>&)> iterFn);
 
     private:
