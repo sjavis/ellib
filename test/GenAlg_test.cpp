@@ -48,7 +48,7 @@ TEST(GenAlgTest, InitClass) {
 
   ga.setMinimiser("lbfgs");
   EXPECT_NO_THROW(dynamic_cast<Lbfgs&>(*ga.min));
-  ga.setMinimiser(std::unique_ptr<Minimiser>(new Fire));
+  ga.setMinimiser(Fire());
   EXPECT_NO_THROW(dynamic_cast<Fire&>(*ga.min));
 }
 

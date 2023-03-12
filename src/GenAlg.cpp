@@ -208,13 +208,13 @@ namespace ellib {
         pop[i] = stateGen();
       }
     } else if (!bounds.empty()) {
-      State state1 = pot->newState((bounds[1]+bounds[0])/2, ranks[0]);
+      State state1 = pot->newState((bounds[1]+bounds[0])/2); // Must explicitly create a State to initialise the vector
       pop = std::vector<State>(popSize, state1);
       int ndof = state1.ndof;
-      for (int i=1; i<popSize; i++) {
+      for (int i=0; i<popSize; i++) {
         Vector coords = vec::random(ndof, 0.5) + 0.5;
         coords = coords * (bounds[1] - bounds[0]) + bounds[0];
-        pop[i] = pot->newState(coords, ranks[i]);
+        pop[i] = State(*pot, coords, ranks[i]);
       }
     } else {
       throw std::logic_error("Either a state generator function or coordinate boundaries must be supplied");
