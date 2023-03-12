@@ -48,8 +48,8 @@ TEST(BitssTest, MinimiserConstructor1) {
   State s1 = pot.newState({0,0,0});
   State s2 = pot.newState({1,0,0});
   // Explicitly pass minimiser object
-  auto min = std::unique_ptr<Fire>(new Fire);
-  Bitss bitss(s1, s2, std::move(min));
+  Fire min;
+  Bitss bitss(s1, s2, min);
   EXPECT_NO_THROW(dynamic_cast<Fire&>(*bitss.minimiser));
   EXPECT_THROW(dynamic_cast<Lbfgs&>(*bitss.minimiser), std::bad_cast);
 }

@@ -264,7 +264,9 @@ namespace ellib {
     Vector coords = state1.coords();
     Vector coords2 = state2.coords();
     coords.insert(coords.end(), coords2.begin(), coords2.end());
-    return State(BitssPotential(state1, state2), coords);
+    State state(BitssPotential(state1, state2), coords);
+    state.convergence = (state1.convergence + state2.convergence) / 2;
+    return state;
   }
 
 
