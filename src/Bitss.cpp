@@ -61,9 +61,15 @@ namespace ellib {
     return *this;
   }
 
+  Bitss& Bitss::setConvergenceEnergy(double convergenceEnergy) {
+    this->convergenceEnergy = convergenceEnergy;
+    return *this;
+  }
+
   Bitss& Bitss::setConvergenceMethod(std::string convergenceMethod) {
     if (convergenceMethod != "distance" &&
         convergenceMethod != "relative distance" &&
+        convergenceMethod != "energy" &&
         convergenceMethod != "midpoint change" &&
         convergenceMethod != "midpoint gradient") {
       throw std::invalid_argument("Invalid convergence method chosen");
@@ -102,9 +108,16 @@ namespace ellib {
     this->log = log;
     return *this;
   }
+ 
+  Bitss& Bitss::setLog(std::function<void(Bitss&)> logfn) {
+    this->log = true;
+    this->logfn = logfn;
+    return *this;
+  }
 
 
   Vector Bitss::run() {
+    _emin = {_pot->state1.energy(), _pot->state2.energy()};
     _pot->d0 = _pot->dist(_pot->state1.coords(), _pot->state2.coords());
     _pot->di = _pot->d0;
     for (_iter=0; _iter<maxIter; _iter++) {
@@ -115,7 +128,9 @@ namespace ellib {
         double e2 = _pot->state2.energy();
         double d = _pot->dist(_pot->state1.coords(), _pot->state2.coords());
         print("BITSS \tI:", _iter, "\tE:", e1, e2, "\tD:", d, "ERR:", d/_pot->di-1);
+        if (logfn) logfn(*this);
       }
+      if (checkFailed()) break;
       if (checkConvergence()) break;
     }
     return getTSCoords();
@@ -220,10 +235,24 @@ namespace ellib {
 
   bool Bitss::checkConvergence() {
     bool converged = false;
+
     if (convergenceMethod == "distance") {
       converged = (_pot->di <= convergenceDist);
+
     } else if (convergenceMethod == "relative distance") {
       converged = (_pot->di/_pot->d0 <= convergenceDist);
+
+    } else if (convergenceMethod == "energy") {
+      Vector coords1 = _pot->state1.blockCoords();
+      Vector coords2 = _pot->state2.blockCoords();
+      Vector ts = interp(coords1, coords2, 0.5);
+      double e1 = _pot->state1.energy();
+      double e2 = _pot->state2.energy();
+      double ets = _pot->state1.energy(ts);
+      double ediff = ets - 0.5*(e1 + e2);
+      double ebarrier = ets - 0.5*(_emin[0] + _emin[1]);
+      converged = (ediff <= convergenceEnergy*ebarrier);
+
     } else if (convergenceMethod == "midpoint gradient") {
       Vector coords1 = _pot->state1.blockCoords();
       Vector coords2 = _pot->state2.blockCoords();
@@ -231,6 +260,7 @@ namespace ellib {
       Vector g = _pot->state1.gradient(ts);
       double grms = vec::norm(g) / sqrt(g.size());
       converged = (grms <= state.convergence);
+
     } else if (convergenceMethod == "midpoint change") {
       Vector coords1 = _pot->state1.blockCoords();
       Vector coords2 = _pot->state2.blockCoords();
@@ -241,7 +271,20 @@ namespace ellib {
       }
       _tsOld = ts;
     }
+
     return converged;
+  }
+
+
+  bool Bitss::checkFailed() {
+    Vector g1 = _pot->state1.gradient();
+    Vector g2 = _pot->state2.gradient();
+    Vector gd = _pot->distGrad(_pot->state1.coords(), _pot->state2.coords());
+    double dotprod1 = vec::dotProduct(g1, gd);
+    double dotprod2 = -vec::dotProduct(g2, gd);
+    bool hasFailed = (dotprod1>0 && dotprod2>0);
+    if (hasFailed) print("WARNING: BITSS has failed and converged to a minimum.");
+    return hasFailed;
   }
 
 

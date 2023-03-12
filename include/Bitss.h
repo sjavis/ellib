@@ -25,8 +25,10 @@ namespace ellib {
       double distStep = 0.5;
       double eScaleMax = 0;
       double convergenceDist = 0.01;
+      double convergenceEnergy = 0.01;
       std::string convergenceMethod = "relative distance"; //!< Method to determine convergence. Possible values: distance, relative distance, midpoint gradient, midpoint change
       bool log = false;
+      std::function<void(Bitss&)> logfn = nullptr;
 
       State state;
       std::unique_ptr<Minimiser> minimiser;
@@ -41,6 +43,7 @@ namespace ellib {
       Bitss& setDistStep(double distStep);
       Bitss& setConvergenceDist(double convergenceDist);
       Bitss& setConvergenceGrad(double convergenceGrad);
+      Bitss& setConvergenceEnergy(double convergenceEnergy);
       Bitss& setConvergenceMethod(std::string convergenceMethod);
       Bitss& setCoefIter(int coefIter);
       Bitss& setAlpha(double alpha);
@@ -48,6 +51,7 @@ namespace ellib {
       Bitss& setEScaleMax(double eScaleMax);
       Bitss& setDistFunc(DFunc dist, DGFunc distGrad);
       Bitss& setLog(bool log=true);
+      Bitss& setLog(std::function<void(Bitss&)> logfn);
 
       State getTS();
       Vector getTSCoords();
@@ -60,6 +64,7 @@ namespace ellib {
 
     private:
       int _iter;
+      Vector _emin;
       Vector _tsOld;
       BitssPotential* _pot;
 
@@ -68,6 +73,7 @@ namespace ellib {
       static void recomputeCoefficients(State& state); // TODO: should this not be static
       static Vector interp(const Vector& coords1, const Vector& coords2, double t);
       bool checkConvergence();
+      bool checkFailed();
 
 
     public:
