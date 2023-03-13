@@ -127,7 +127,7 @@ namespace ellib {
         double e1 = _pot->state1.energy();
         double e2 = _pot->state2.energy();
         double d = _pot->dist(_pot->state1.coords(), _pot->state2.coords());
-        print("BITSS \tI:", _iter, "\tE:", e1, e2, "\tD:", d, "ERR:", d/_pot->di-1);
+        print("BITSS \tI:", _iter, minimiser->iter, "\tE:", e1, e2, "\tD:", d, "ERR:", d/_pot->di-1);
         if (logfn) logfn(*this);
       }
       if (checkFailed()) break;
@@ -218,7 +218,7 @@ namespace ellib {
     // Test against the maximum barrier size, if provided
     if (pot->maxBarrier!=0) eb = std::min(eb, pot->maxBarrier*pot->di/pot->d0);
     // Ensure the barrier is not zero
-    if (eb <= 0) eb = 1e-4*abs(e1-e2);
+    if (eb <= 0) return;
 
     // Compute gradient magnitude in separation direction
     Vector dg = pot->distGrad(coords1, coords2);
@@ -251,7 +251,7 @@ namespace ellib {
       double ets = _pot->state1.energy(ts);
       double ediff = ets - 0.5*(e1 + e2);
       double ebarrier = ets - 0.5*(_emin[0] + _emin[1]);
-      converged = (ediff <= convergenceEnergy*ebarrier);
+      converged = (ets > std::max(e1,e2)) && (ediff <= convergenceEnergy*ebarrier);
 
     } else if (convergenceMethod == "midpoint gradient") {
       Vector coords1 = _pot->state1.blockCoords();
@@ -277,6 +277,8 @@ namespace ellib {
 
 
   bool Bitss::checkFailed() {
+    double dist = _pot->dist(_pot->state1.coords(), _pot->state2.coords());
+    if (dist > _pot->di) return false;
     Vector g1 = _pot->state1.gradient();
     Vector g2 = _pot->state2.gradient();
     Vector gd = _pot->distGrad(_pot->state1.coords(), _pot->state2.coords());
