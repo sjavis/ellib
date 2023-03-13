@@ -160,7 +160,7 @@ namespace ellib {
     return *this;
   }
 
-  GenAlg& GenAlg::setIterFn(std::function<void(std::vector<State>&)> iterFn) {
+  GenAlg& GenAlg::setIterFn(std::function<void(int,std::vector<State>&)> iterFn) {
     this->iterFn = iterFn;
     return *this;
   }
@@ -174,7 +174,7 @@ namespace ellib {
         newGeneration(parents);
       }
       minimise();
-      if (iterFn) iterFn(pop);
+      if (iterFn) iterFn(iter, pop);
       getEnergies();
       if (checkComplete()) break;
     }

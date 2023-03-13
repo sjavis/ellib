@@ -71,11 +71,11 @@ namespace ellib {
 
       // Other parameters
       std::unique_ptr<Minimiser> min = nullptr;
-      std::function<void(std::vector<State>&)> iterFn;
+      std::function<void(int,std::vector<State>&)> iterFn;
 
       GenAlg& setMinimiser(const std::string& min);
       GenAlg& setMinimiser(const Minimiser& min);
-      GenAlg& setIterFn(std::function<void(std::vector<State>&)> iterFn);
+      GenAlg& setIterFn(std::function<void(int,std::vector<State>&)> iterFn);
 
     private:
       int noImprovementIter;

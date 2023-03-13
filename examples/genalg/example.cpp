@@ -5,7 +5,7 @@ using namespace ellib;
 typedef std::vector<double> Vector;
 
 
-void outputPop(std::vector<State>& pop) {
+void outputPop(int iter, std::vector<State>& pop) {
   std::ofstream file;
   if (mpi.rank==0) file = std::ofstream("output.txt", std::ios_base::app);
   for (auto s: pop) {
