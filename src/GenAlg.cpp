@@ -290,6 +290,7 @@ namespace ellib {
     std::copy(parents.begin(), parents.begin()+numElites, pop.begin());
     // Fill the remaining population
     for (int iPop=numElites; iPop<popSize; iPop++) {
+      // Choose two parents
       int i1 = randI(parents.size());
       int i2 = (randI(parents.size()-1) + i1+1) % parents.size(); // Ensure that i2 != i1
       mpi.bcast(i1);
@@ -301,7 +302,12 @@ namespace ellib {
         // Crossover
         if (randF() < 0.5) coords[iCoord] = coords2[iCoord];
         // Mutation
-        if (randF() < mutationRate) coords[iCoord] += pertubation[iCoord] * (2*randF()-1);
+        if (randF() < mutationRate) {
+          coords[iCoord] += pertubation[iCoord] * (2*randF()-1);
+          if (bounds.empty()) continue;
+          if (coords[iCoord] < bounds[0][iCoord]) coords[iCoord] = bounds[0][iCoord];
+          if (coords[iCoord] > bounds[1][iCoord]) coords[iCoord] = bounds[1][iCoord];
+        }
       }
       pop[iPop].coords(coords);
     }
