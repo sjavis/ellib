@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
   Potential pot(eFunc, gFunc);
 
   GenAlg ga = GenAlg(pot).setBounds({-1,-1}, {2,2}).setMaxIter(10).setIterFn(outputPop);
-  ga.setMinimiser("lbfgs");
+  // ga.setMinimiser("lbfgs");
   auto result = ga.run();
   print(result);
 
