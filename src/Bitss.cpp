@@ -138,8 +138,9 @@ namespace ellib {
 
 
   State Bitss::getTS() {
-    auto pot = *(_pot->state1.pot);
-    return State(pot, getTSCoords());
+    State ts(_pot->state1);
+    ts.coords(getTSCoords());
+    return ts;
   }
 
 
