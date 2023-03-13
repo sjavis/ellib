@@ -138,23 +138,20 @@ namespace ellib {
 
 
   State Bitss::getTS() {
-    auto bitssPot = static_cast<BitssPotential&>(*state.pot);
-    auto pot = *(bitssPot.state1.pot);
+    auto pot = *(_pot->state1.pot);
     return State(pot, getTSCoords());
   }
 
 
   Vector Bitss::getTSCoords() {
-    auto bitssPot = static_cast<BitssPotential&>(*state.pot);
-    auto coords1 = bitssPot.state1.coords();
-    auto coords2 = bitssPot.state2.coords();
+    auto coords1 = _pot->state1.coords();
+    auto coords2 = _pot->state2.coords();
     return interp(coords1, coords2, 0.5);
   }
 
 
   std::vector<State> Bitss::getPair() {
-    auto bitssPot = static_cast<BitssPotential&>(*state.pot);
-    return {bitssPot.state1, bitssPot.state2};
+    return {_pot->state1, _pot->state2};
   }
 
 
@@ -165,21 +162,19 @@ namespace ellib {
  
 
   Bitss& Bitss::setCoords(const Vector& coords) {
-    auto pot = static_cast<BitssPotential*>(state.pot.get());
     state.coords(coords);
-    auto coordsMid = coords.begin() + pot->state1.ndof;
-    pot->state1.coords(Vector(coords.begin(), coordsMid));
-    pot->state2.coords(Vector(coordsMid, coords.end()));
+    auto coordsMid = coords.begin() + _pot->state1.ndof;
+    _pot->state1.coords(Vector(coords.begin(), coordsMid));
+    _pot->state2.coords(Vector(coordsMid, coords.end()));
     return *this;
   }
  
   Bitss& Bitss::setCoords(const Vector& coords1, const Vector& coords2) {
-    auto pot = static_cast<BitssPotential*>(state.pot.get());
     Vector allCoords = coords1;
     allCoords.insert(allCoords.end(), coords2.begin(), coords2.end());
     state.coords(allCoords);
-    pot->state1.coords(coords1);
-    pot->state2.coords(coords2);
+    _pot->state1.coords(coords1);
+    _pot->state2.coords(coords2);
     return *this;
   }
 
