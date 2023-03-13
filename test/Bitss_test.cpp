@@ -10,6 +10,7 @@
 #include "minim/GradDescent.h"
 #include "minim/Anneal.h"
 #include "minim/utils/mpi.h"
+#include "minim/utils/print.h"
 #include <math.h>
 
 using namespace ellib;
@@ -125,15 +126,16 @@ TEST(BitssTest, ConvergenceDist) {
 }
 
 
-TEST(BitssTest, EScaleMax) {
+TEST(BitssTest, maxBarrier) {
   Lj3d pot;
   State s1 = pot.newState({0,0,0});
   State s2 = pot.newState({1,0,0});
   Bitss bitss(s1, s2);
   // Check default value and setter
-  EXPECT_EQ(bitss.eScaleMax, 0);
-  bitss.setEScaleMax(0.1);
-  EXPECT_EQ(bitss.eScaleMax, 0.1);
+  auto bitssPot = static_cast<Bitss::BitssPotential*>(bitss.state.pot.get());
+  EXPECT_EQ(bitssPot->maxBarrier, 0);
+  bitss.setMaxBarrier(0.1);
+  EXPECT_EQ(bitssPot->maxBarrier, 0.1);
 }
 
 

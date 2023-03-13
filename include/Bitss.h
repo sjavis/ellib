@@ -23,7 +23,6 @@ namespace ellib {
 
       int maxIter = 10;
       double distStep = 0.5;
-      double eScaleMax = 0;
       double convergenceDist = 0.01;
       double convergenceEnergy = 0.01;
       std::string convergenceMethod = "relative distance"; //!< Method to determine convergence. Possible values: distance, relative distance, midpoint gradient, midpoint change
@@ -48,7 +47,7 @@ namespace ellib {
       Bitss& setCoefIter(int coefIter);
       Bitss& setAlpha(double alpha);
       Bitss& setBeta(double beta);
-      Bitss& setEScaleMax(double eScaleMax);
+      Bitss& setMaxBarrier(double maxBarrier);
       Bitss& setDistFunc(DFunc dist, DGFunc distGrad);
       Bitss& setLog(bool log=true);
       Bitss& setLog(std::function<void(Bitss&)> logfn);
@@ -70,7 +69,7 @@ namespace ellib {
 
       static State createState(const State& state1, const State& state2);
       static void adjustState(int iter, State& state);
-      static void recomputeCoefficients(State& state); // TODO: should this not be static
+      static void recomputeCoefficients(State& state);
       static Vector interp(const Vector& coords1, const Vector& coords2, double t);
       bool checkConvergence();
       bool checkFailed();
@@ -83,6 +82,7 @@ namespace ellib {
           int coefIter = 100;
           double alpha = 10;
           double beta = 0.1;
+          double maxBarrier = 0;
           double di;
           double d0;
           double ke;

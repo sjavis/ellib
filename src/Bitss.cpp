@@ -93,8 +93,8 @@ namespace ellib {
     return *this;
   }
  
-  Bitss& Bitss::setEScaleMax(double eScaleMax) {
-    this->eScaleMax = eScaleMax;
+  Bitss& Bitss::setMaxBarrier(double maxBarrier) {
+    _pot->maxBarrier = maxBarrier;
     return *this;
   }
  
@@ -212,13 +212,17 @@ namespace ellib {
     // Estimate energy barrier
     int nInterp = 10;
     double emin = std::min(e1, e2);
-    double emax = std::max(e1, e2);
+    double emax = emin;
     for (int i=1; i<nInterp; i++) {
       double t = double(i) / nInterp;
       Vector xtmp = interp(coords1, coords2, t);
       emax = std::max(emax, pot->state1.energy(xtmp));
     }
-    double eb = emax - emin; // TODO: ensure eb is not zero
+    double eb = emax - emin;
+    // Test against the maximum barrier size, if provided
+    if (pot->maxBarrier!=0) eb = std::min(eb, pot->maxBarrier*pot->di/pot->d0);
+    // Ensure the barrier is not zero
+    if (eb <= 0) eb = 1e-4*abs(e1-e2);
 
     // Compute gradient magnitude in separation direction
     Vector dg = pot->distGrad(coords1, coords2);
