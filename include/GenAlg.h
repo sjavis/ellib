@@ -43,6 +43,7 @@ namespace ellib {
       int numElites = 1;
       double selectionRate = 0.3;
       double mutationRate = 0.1;
+      std::string selectionMethod = "roulette";
       Vector pertubation = Vector();
 
       GenAlg& setMaxIter(int maxIter);
@@ -50,6 +51,7 @@ namespace ellib {
       GenAlg& setNumElites(int numElites);
       GenAlg& setSelectionRate(double selectionRate);
       GenAlg& setMutationRate(double mutationRate);
+      GenAlg& setSelectionMethod(std::string selectionMethod);
       GenAlg& setPertubation(Vector pertubation);
 
       // Convergence parameters

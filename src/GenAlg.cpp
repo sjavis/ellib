@@ -28,6 +28,7 @@ namespace ellib {
       numElites(genAlg.numElites),
       selectionRate(genAlg.selectionRate),
       mutationRate(genAlg.mutationRate),
+      selectionMethod(genAlg.selectionMethod),
       pertubation(genAlg.pertubation),
       noImprovementConvergence(genAlg.noImprovementConvergence),
       energyConvergence(genAlg.energyConvergence),
@@ -46,6 +47,7 @@ namespace ellib {
     numElites = genAlg.numElites;
     selectionRate = genAlg.selectionRate;
     mutationRate = genAlg.mutationRate;
+    selectionMethod = genAlg.selectionMethod;
     pertubation = genAlg.pertubation;
     noImprovementConvergence = genAlg.noImprovementConvergence;
     energyConvergence = genAlg.energyConvergence;
@@ -80,6 +82,13 @@ namespace ellib {
 
   GenAlg& GenAlg::setMutationRate(double mutationRate) {
     this->mutationRate = mutationRate;
+    return *this;
+  }
+
+  GenAlg& GenAlg::setSelectionMethod(std::string selectionMethod) {
+    std::vector<std::string> methods = {"roulette", "best"};
+    if (!vec::isIn(methods, selectionMethod)) throw std::invalid_argument("Invalid genetic algorithm selection method");
+    this->selectionMethod = selectionMethod;
     return *this;
   }
 
@@ -251,7 +260,28 @@ namespace ellib {
   std::vector<State> GenAlg::select() {
     int nParents = selectionRate * popSize;
     nParents = std::max({nParents, numElites, 1});
-    return getBestStates(nParents);
+
+    if (selectionMethod == "roulette") {
+      std::vector<State> parents(pop.begin(), pop.begin()+nParents);
+      Vector probI = 1 / popEnergies;
+      double probTot = vec::sum(probI);
+      for (int iParents=0; iParents<nParents; iParents++) {
+        double testValue = randF() * probTot;
+        for (int iPop=0; iPop<popSize; iPop++) {
+          if (testValue < probI[iPop]) {
+            parents[iParents] = pop[iPop];
+            probTot -= probI[iPop];
+            probI[iPop] = 0;
+            break;
+          }
+          testValue -= probI[iPop];
+        }
+      }
+      return parents;
+
+    } else {
+      return getBestStates(nParents);
+    }
   }
 
 
