@@ -126,8 +126,9 @@ namespace ellib {
       if (log) {
         double e1 = _pot->state1.energy();
         double e2 = _pot->state2.energy();
+        double ets = _pot->state1.energy(getTSCoords());
         double d = _pot->dist(_pot->state1.coords(), _pot->state2.coords());
-        print("BITSS \tI:", _iter, minimiser->iter, "\tE:", e1, e2, "\tD:", d, "ERR:", d/_pot->di-1);
+        print("BITSS \tI:", _iter, minimiser->iter, "\tE:", e1, "\t", e2, "\t", ets, "\tD:", d, "\tERR:", d/_pot->di-1);
         if (logfn) logfn(*this);
       }
       if (checkFailed()) break;
@@ -225,7 +226,7 @@ namespace ellib {
     double dgm = vec::norm(dg);
     double grad1 = abs(vec::dotProduct(dg, g1)) / dgm;
     double grad2 = abs(vec::dotProduct(dg, g2)) / dgm;
-    double grad = std::max(sqrt(grad1+grad2), 2.828*eb/pot->di);
+    double grad = std::max(sqrt(pow(grad1,2)+pow(grad2,2)), 2.828*eb/pot->di);
 
     // Coefficients
     pot->ke = pot->alpha / (2 * eb);
@@ -277,14 +278,17 @@ namespace ellib {
 
 
   bool Bitss::checkFailed() {
-    double dist = _pot->dist(_pot->state1.coords(), _pot->state2.coords());
-    if (dist > _pot->di) return false;
-    Vector g1 = _pot->state1.gradient();
-    Vector g2 = _pot->state2.gradient();
-    Vector gd = _pot->distGrad(_pot->state1.coords(), _pot->state2.coords());
-    double dotprod1 = vec::dotProduct(g1, gd);
-    double dotprod2 = -vec::dotProduct(g2, gd);
-    bool hasFailed = (dotprod1>0 && dotprod2>0);
+    // double dist = _pot->dist(_pot->state1.coords(), _pot->state2.coords());
+    // if (dist > _pot->di) return false;
+    // Vector g1 = _pot->state1.gradient();
+    // Vector g2 = _pot->state2.gradient();
+    // Vector gd = _pot->distGrad(_pot->state1.coords(), _pot->state2.coords());
+    // double dotprod1 = vec::dotProduct(g1, gd);
+    // double dotprod2 = -vec::dotProduct(g2, gd);
+    // bool hasFailed = (dotprod1>0 && dotprod2>0);
+    double e1 = _pot->state1.energy();
+    double e2 = _pot->state2.energy();
+    bool hasFailed = (std::max(e1, e2) < 0.5*(_emin[0]+_emin[1]));
     if (hasFailed) print("WARNING: BITSS has failed and converged to a minimum.");
     return hasFailed;
   }
