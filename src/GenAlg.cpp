@@ -169,14 +169,14 @@ namespace ellib {
   Vector GenAlg::run() {
     initialise();
     for (int iter=0; iter<maxIter; iter++) {
-      if (iter > 0) {
-        auto parents = select();
-        newGeneration(parents);
-      }
       minimise();
       getEnergies();
+
       if (iterFn) iterFn(iter, *this);
       if (checkComplete()) break;
+
+      auto parents = select();
+      newGeneration(parents);
     }
 
     auto bestState = pop[getBest(1)[0]];
@@ -253,7 +253,6 @@ namespace ellib {
     noImprovementIter = 0;
     bestEnergy = std::numeric_limits<double>::infinity();
     popEnergies = Vector(popSize);
-    getEnergies();
   }
 
 
