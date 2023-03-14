@@ -18,6 +18,7 @@ namespace ellib {
     typedef State (*StateFn)();
 
     public:
+      Vector popEnergies;
       std::vector<State> pop;
       std::unique_ptr<Potential> pot;
 
@@ -29,12 +30,12 @@ namespace ellib {
       Vector run();
 
       void initialise();
-      std::vector<State> select();
-      void newGeneration(const std::vector<State>& parents);
+      std::vector<int> select();
+      void newGeneration(std::vector<int> parents);
       void minimise();
       bool checkComplete();
       Vector getEnergies();
-      std::vector<State> getBestStates(int n);
+      std::vector<int> getBest(int n);
 
 
       // General GA parameters
@@ -71,16 +72,15 @@ namespace ellib {
 
       // Other parameters
       std::unique_ptr<Minimiser> min = nullptr;
-      std::function<void(int,std::vector<State>&)> iterFn;
+      std::function<void(int,GenAlg&)> iterFn;
 
       GenAlg& setMinimiser(const std::string& min);
       GenAlg& setMinimiser(const Minimiser& min);
-      GenAlg& setIterFn(std::function<void(int,std::vector<State>&)> iterFn);
+      GenAlg& setIterFn(std::function<void(int,GenAlg&)> iterFn);
 
     private:
       int noImprovementIter;
       double bestEnergy;
-      Vector popEnergies;
 
       static thread_local std::mt19937 randEng;
       static float randF();

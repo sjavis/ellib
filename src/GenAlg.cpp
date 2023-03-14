@@ -160,7 +160,7 @@ namespace ellib {
     return *this;
   }
 
-  GenAlg& GenAlg::setIterFn(std::function<void(int,std::vector<State>&)> iterFn) {
+  GenAlg& GenAlg::setIterFn(std::function<void(int,GenAlg&)> iterFn) {
     this->iterFn = iterFn;
     return *this;
   }
@@ -174,12 +174,12 @@ namespace ellib {
         newGeneration(parents);
       }
       minimise();
-      if (iterFn) iterFn(iter, pop);
       getEnergies();
+      if (iterFn) iterFn(iter, *this);
       if (checkComplete()) break;
     }
 
-    auto bestState = getBestStates(1)[0];
+    auto bestState = pop[getBest(1)[0]];
     return bestState.coords();
   }
 
@@ -257,19 +257,20 @@ namespace ellib {
   }
 
 
-  std::vector<State> GenAlg::select() {
+  std::vector<int> GenAlg::select() {
     int nParents = selectionRate * popSize;
     nParents = std::max({nParents, numElites, 1});
 
     if (selectionMethod == "roulette") {
-      std::vector<State> parents(pop.begin(), pop.begin()+nParents);
+      std::vector<int> parents(nParents);
       Vector probI = 1 / popEnergies;
       double probTot = vec::sum(probI);
       for (int iParents=0; iParents<nParents; iParents++) {
         double testValue = randF() * probTot;
+        mpi.bcast(testValue);
         for (int iPop=0; iPop<popSize; iPop++) {
           if (testValue < probI[iPop]) {
-            parents[iParents] = pop[iPop];
+            parents[iParents] = iPop;
             probTot -= probI[iPop];
             probI[iPop] = 0;
             break;
@@ -280,23 +281,30 @@ namespace ellib {
       return parents;
 
     } else {
-      return getBestStates(nParents);
+      return getBest(nParents);
     }
   }
 
 
-  void GenAlg::newGeneration(const std::vector<State>& parents) {
+  void GenAlg::newGeneration(std::vector<int> parents) {
+    Vector2d parentCoords(parents.size());
+    for (int iParent=0; iParent<(int)parents.size(); iParent++) {
+      parentCoords[iParent] = pop[parents[iParent]].allCoords();
+    }
     // Directly set elites
-    std::copy(parents.begin(), parents.begin()+numElites, pop.begin());
+    auto elites = getBest(numElites);
+    for (int iPop=0; iPop<numElites; iPop++) {
+      auto elite = pop[elites[iPop]].allCoords();
+      pop[iPop].coords(elite);
+    }
     // Fill the remaining population
     for (int iPop=numElites; iPop<popSize; iPop++) {
+      if (!pop[iPop].usesThisProc) continue;
       // Choose two parents
       int i1 = randI(parents.size());
       int i2 = (randI(parents.size()-1) + i1+1) % parents.size(); // Ensure that i2 != i1
-      mpi.bcast(i1);
-      mpi.bcast(i2);
-      auto coords = parents[i1].allCoords();
-      auto coords2 = parents[i2].allCoords();
+      auto coords = parentCoords[i1];
+      auto coords2 = parentCoords[i2];
       int ndof = pop[iPop].ndof;
       for (int iCoord=0; iCoord<ndof; iCoord++) {
         // Crossover
@@ -309,6 +317,8 @@ namespace ellib {
           if (coords[iCoord] > bounds[1][iCoord]) coords[iCoord] = bounds[1][iCoord];
         }
       }
+      auto comm = pop[iPop].comm;
+      if (comm.ranks.size() > 1) comm.bcast(coords, comm.ranks[0]);
       pop[iPop].coords(coords);
     }
   }
@@ -350,17 +360,12 @@ namespace ellib {
   }
 
 
-  std::vector<State> GenAlg::getBestStates(int n) {
+  std::vector<int> GenAlg::getBest(int n) {
     // Get the indicies of the lowest energy states
     std::vector<int> index(popSize);
     std::iota(index.begin(), index.end(), 0);
     std::partial_sort(index.begin(), index.begin()+n, index.end(), [this](int i, int j){ return popEnergies[i]<popEnergies[j]; });
-    // Get the vector of the best states
-    std::vector<State> best(n, pop[0]); // Assign pop[0] because State has no default initialiser
-    for (int i=0; i<n; i++) {
-      best[i] = pop[index[i]];
-    }
-    return best;
+    return index;
   }
 
   float GenAlg::randF() {
