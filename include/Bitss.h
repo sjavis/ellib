@@ -62,6 +62,7 @@ namespace ellib {
       int iter() { return _iter; };
 
     private:
+      bool _failed = false;
       int _iter;
       Vector _emin;
       Vector _tsOld;

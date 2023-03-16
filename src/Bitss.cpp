@@ -120,6 +120,7 @@ namespace ellib {
     _emin = {_pot->state1.energy(), _pot->state2.energy()};
     _pot->d0 = _pot->dist(_pot->state1.coords(), _pot->state2.coords());
     _pot->di = _pot->d0;
+
     for (_iter=0; _iter<maxIter; _iter++) {
       _pot->di = _pot->di * (1 - distStep);
       minimiser->minimise(state, &adjustState);
@@ -131,9 +132,18 @@ namespace ellib {
         print("BITSS \tI:", _iter, minimiser->iter, "\tE:", e1, "\t", e2, "\t", ets, "\tD:", d, "\tERR:", d/_pot->di-1);
         if (logfn) logfn(*this);
       }
-      if (checkFailed()) break;
+      if (checkFailed()) return getTSCoords();
       if (checkConvergence()) break;
     }
+
+    // Ensure the final state properly converged
+    if (minimiser->iter >= minimiser->maxIter) {
+      minimiser->minimise(state, &adjustState);
+      if (minimiser->iter >= minimiser->maxIter) _failed = true;
+    }
+    double eTest = std::max(_pot->state1.energy(), _pot->state2.energy());
+    if (getTS().energy() < eTest) _failed = true;
+
     return getTSCoords();
   }
 
@@ -278,6 +288,7 @@ namespace ellib {
 
 
   bool Bitss::checkFailed() {
+    if (_failed) return true;
     // double dist = _pot->dist(_pot->state1.coords(), _pot->state2.coords());
     // if (dist > _pot->di) return false;
     // Vector g1 = _pot->state1.gradient();
@@ -288,9 +299,10 @@ namespace ellib {
     // bool hasFailed = (dotprod1>0 && dotprod2>0);
     double e1 = _pot->state1.energy();
     double e2 = _pot->state2.energy();
-    bool hasFailed = (std::max(e1, e2) < 0.5*(_emin[0]+_emin[1]));
-    if (hasFailed) print("WARNING: BITSS has failed and converged to a minimum.");
-    return hasFailed;
+    bool belowMin = (std::max(e1, e2) < 0.5*(_emin[0]+_emin[1]));
+    bool isNan = (std::isnan(e1) || std::isnan(e2));
+    _failed = (belowMin || isNan);
+    return _failed;
   }
 
 
