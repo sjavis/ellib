@@ -289,14 +289,6 @@ namespace ellib {
 
   bool Bitss::checkFailed() {
     if (_failed) return true;
-    // double dist = _pot->dist(_pot->state1.coords(), _pot->state2.coords());
-    // if (dist > _pot->di) return false;
-    // Vector g1 = _pot->state1.gradient();
-    // Vector g2 = _pot->state2.gradient();
-    // Vector gd = _pot->distGrad(_pot->state1.coords(), _pot->state2.coords());
-    // double dotprod1 = vec::dotProduct(g1, gd);
-    // double dotprod2 = -vec::dotProduct(g2, gd);
-    // bool hasFailed = (dotprod1>0 && dotprod2>0);
     double e1 = _pot->state1.energy();
     double e2 = _pot->state2.energy();
     bool belowMin = (std::max(e1, e2) < 0.5*(_emin[0]+_emin[1]));

@@ -56,6 +56,8 @@ namespace ellib {
       Vector getTSCoords();
       std::vector<State> getPair();
       std::vector<Vector> getPairCoords();
+      bool checkFailed();
+
       Bitss& setCoords(const Vector& coords);
       Bitss& setCoords(const Vector& coords1, const Vector& coords2);
 
@@ -73,7 +75,6 @@ namespace ellib {
       static void recomputeCoefficients(State& state);
       static Vector interp(const Vector& coords1, const Vector& coords2, double t);
       bool checkConvergence();
-      bool checkFailed();
 
 
     public:
