@@ -56,6 +56,7 @@ namespace ellib {
     }
     this->state = State(NebPotential(chain, dneb), allCoords);
     this->minimiser = std::unique_ptr<Minimiser>(new Lbfgs);
+    this->pot = static_cast<Neb::NebPotential*>(state.pot.get());
   }
 
   Neb::Neb(const Potential& pot, vector<double> coords1, vector<double> coords2, int nImage, bool dneb)
@@ -66,6 +67,11 @@ namespace ellib {
   Neb& Neb::setHybrid(int method, int onIter) {
     hybrid = method;
     hybridIter = onIter;
+    return *this;
+  }
+
+  Neb& Neb::setKSpring(double kSpring) {
+    pot->kSpring = kSpring;
     return *this;
   }
 
