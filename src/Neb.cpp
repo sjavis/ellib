@@ -166,10 +166,9 @@ namespace ellib {
     if (!g) return;
 
     // Hybrid method
-    int iMaxState;
+    int iMaxState = 1;
     if (hybrid) {
       // Get highest energy state
-      iMaxState = 1;
       double eMax = eList[1];
       for (int iState=2; iState<nImage-1; iState++) {
         if (eList[iState] > eMax) {
