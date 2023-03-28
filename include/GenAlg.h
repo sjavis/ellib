@@ -15,7 +15,6 @@ namespace ellib {
   class GenAlg {
     typedef std::vector<double> Vector;
     typedef std::vector<Vector> Vector2d;
-    typedef State (*StateFn)();
 
     public:
       Vector popEnergies;
@@ -65,9 +64,9 @@ namespace ellib {
 
       // Initialisation parameters
       Vector2d bounds = Vector2d();
-      StateFn stateGen = nullptr;
+      std::function<State()> stateGen = nullptr;
 
-      GenAlg& setStateGen(StateFn stateGen);
+      GenAlg& setStateGen(std::function<State()> stateGen);
       GenAlg& setBounds(Vector bound1, Vector bound2);
 
       // Other parameters

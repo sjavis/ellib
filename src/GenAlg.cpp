@@ -97,7 +97,7 @@ namespace ellib {
     return *this;
   }
 
-  GenAlg& GenAlg::setStateGen(StateFn stateGen) {
+  GenAlg& GenAlg::setStateGen(std::function<State()> stateGen) {
     this->stateGen = stateGen;
     return *this;
   }
