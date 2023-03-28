@@ -184,7 +184,7 @@ namespace ellib {
   }
 
 
-  std::vector<std::vector<int>> getRanks(int popSize) {
+  static std::vector<std::vector<int>> getRanks(int popSize) {
     std::vector<std::vector<int>> ranks(popSize);
     if (popSize < mpi.size) {
       // Multiple processors per state
@@ -375,7 +375,7 @@ namespace ellib {
     return std::uniform_int_distribution<>{0, n-1}(randEng);
   }
 
-  unsigned seed = std::random_device()();
+  static unsigned seed = std::random_device()();
   thread_local std::mt19937 GenAlg::randEng(seed);
 
 }

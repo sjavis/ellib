@@ -7,7 +7,7 @@ using std::vector;
 
 namespace ellib {
 
-  std::vector<std::vector<int>> getRanks(int nImage) {
+  static std::vector<std::vector<int>> getRanks(int nImage) {
     std::vector<std::vector<int>> ranks(nImage);
     if (nImage < mpi.size) {
       // Multiple processors per state
@@ -31,7 +31,7 @@ namespace ellib {
   }
 
 
-  std::vector<std::vector<double>> interpolate(vector<double> coords1, vector<double> coords2, int nImage) {
+  static std::vector<std::vector<double>> interpolate(vector<double> coords1, vector<double> coords2, int nImage) {
     vector<vector<double>> chain(nImage);
     for (int i=0; i<nImage; i++) {
       double t = i / (nImage - 1.0);
