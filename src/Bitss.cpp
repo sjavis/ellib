@@ -37,6 +37,7 @@ namespace ellib {
     } else {
       throw std::invalid_argument("Invalid minimiser chosen");
     }
+    this->minimiser->setLinesearch("none");
   }
 
   Bitss::Bitss(const State& state1, const State& state2, const Minimiser& minimiser)
