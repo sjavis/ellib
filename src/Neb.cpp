@@ -56,6 +56,7 @@ namespace ellib {
     }
     this->state = State(NebPotential(chain, dneb), allCoords);
     this->minimiser = std::unique_ptr<Minimiser>(new Lbfgs);
+    this->minimiser->setLinesearch("none");
     this->pot = static_cast<Neb::NebPotential*>(state.pot.get());
   }
 
@@ -72,6 +73,11 @@ namespace ellib {
 
   Neb& Neb::setKSpring(double kSpring) {
     pot->kSpring = kSpring;
+    return *this;
+  }
+
+  Neb& Neb::setMinimiser(const Minimiser& minimiser) {
+    this->minimiser = minimiser.clone();
     return *this;
   }
 

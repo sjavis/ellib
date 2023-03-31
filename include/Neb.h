@@ -22,6 +22,7 @@ namespace ellib {
       Neb(const Potential& pot, std::vector<double> coords1, std::vector<double> coords2, int nImage, bool dneb=false);
       Neb& setHybrid(int method, int onIter);
       Neb& setKSpring(double kSpring);
+      Neb& setMinimiser(const Minimiser& minimiser);
 
       std::vector<std::vector<double>> run();
       std::vector<State> getChain();
