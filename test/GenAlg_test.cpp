@@ -6,7 +6,7 @@
 #include "minim/utils/mpi.h"
 #include "minim/utils/print.h"
 
-#include "minim/Lj3d.h"
+#include "minim/LjNd.h"
 #include "minim/Lbfgs.h"
 #include "minim/Fire.h"
 

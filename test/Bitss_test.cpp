@@ -4,7 +4,7 @@
 #include "gtest-mpi-listener.hpp"
 #include "ArraysMatch.h"
 
-#include "minim/Lj3d.h"
+#include "minim/LjNd.h"
 #include "minim/Lbfgs.h"
 #include "minim/Fire.h"
 #include "minim/GradDescent.h"
@@ -39,8 +39,8 @@ TEST(BitssTest, DefaultInitialisation) {
   // Check single state potentials are correct
   ASSERT_NO_THROW(dynamic_cast<Bitss::BitssPotential&>(*bitss.state.pot));
   auto bitssPot = static_cast<Bitss::BitssPotential&>(*bitss.state.pot);
-  EXPECT_NO_THROW(dynamic_cast<Lj3d&>(*bitssPot.state1.pot));
-  EXPECT_NO_THROW(dynamic_cast<Lj3d&>(*bitssPot.state2.pot));
+  EXPECT_NO_THROW(dynamic_cast<LjNd&>(*bitssPot.state1.pot));
+  EXPECT_NO_THROW(dynamic_cast<LjNd&>(*bitssPot.state2.pot));
 }
 
 
