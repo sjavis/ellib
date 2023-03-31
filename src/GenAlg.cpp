@@ -262,8 +262,16 @@ namespace ellib {
 
     if (selectionMethod == "roulette") {
       std::vector<int> parents(nParents);
+      // Ensure no energies are 0 or negative
+      double eMin = *std::min_element(popEnergies.begin(), popEnergies.end());
+      if (eMin <= 0) {
+        double eMax = *std::max_element(popEnergies.begin(), popEnergies.end());
+        popEnergies += 0.001*(eMax-eMin) - eMin;
+      }
+      // Get probabilities
       Vector probI = 1 / popEnergies;
       double probTot = vec::sum(probI);
+      // Get each parent
       for (int iParents=0; iParents<nParents; iParents++) {
         double testValue = randF() * probTot;
         mpi.bcast(testValue);
